@@ -1,0 +1,50 @@
+@model IEnumerable<gestor_financiero.Models.Categoria>
+@{
+    ViewBag.Title = "Categorías";
+    var grupos = Model.GroupBy(c => c.Tipo);
+    Func<string, (string color, string icon, string label)> meta = tipo => tipo switch
+    {
+        "INGRESO"        => ("emerald", "lucide-trending-up",   "Ingresos"),
+        "AHORRO"         => ("sky",     "lucide-piggy-bank",    "Ahorros"),
+        "GASTO_FIJO"     => ("amber",   "lucide-home",          "Gastos fijos"),
+        "GASTO_VARIABLE" => ("rose",    "lucide-shopping-bag",  "Gastos variables"),
+        "DEUDA"          => ("violet",  "lucide-credit-card",   "Deudas"),
+        _ => ("slate", "lucide-tag", tipo)
+    };
+}
+
+<div class="flex justify-end mb-4">
+    <a href="@Url.Action("Create")" class="inline-flex items-center gap-1 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium">
+        <i class="lucide lucide-plus"></i> Nueva categoría
+    </a>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    @foreach (var grupo in grupos)
+    {
+        var (color, icon, label) = meta(grupo.Key);
+        <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+            <div class="px-5 py-4 flex items-center gap-3 border-b border-slate-100 bg-@(color)-50">
+                <div class="w-10 h-10 bg-@(color)-100 text-@(color)-600 rounded-lg flex items-center justify-center">
+                    <i class="lucide @icon"></i>
+                </div>
+                <div>
+                    <div class="font-semibold text-slate-800">@label</div>
+                    <div class="text-xs text-slate-500">@grupo.Count() categoría(s)</div>
+                </div>
+            </div>
+            <ul class="divide-y divide-slate-100">
+                @foreach (var c in grupo)
+                {
+                    <li class="px-5 py-3 flex items-center justify-between hover:bg-slate-50">
+                        <span class="text-sm text-slate-800">@c.Nombre</span>
+                        <div class="flex gap-2 text-slate-500">
+                            <a href="@Url.Action("Edit", new { id = c.IdCategoria })" class="hover:text-brand-600"><i class="lucide lucide-pencil text-sm"></i></a>
+                            <a href="@Url.Action("Delete", new { id = c.IdCategoria })" class="hover:text-rose-600"><i class="lucide lucide-trash-2 text-sm"></i></a>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</div>

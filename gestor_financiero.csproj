@@ -92,11 +92,87 @@
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
+    <Compile Include="Controllers\AccountController.cs" />
+    <Compile Include="Controllers\CategoriaController.cs" />
+    <Compile Include="Controllers\DeudaController.cs" />
+    <Compile Include="Controllers\HomeController.cs" />
+    <Compile Include="Controllers\PagoDeudaController.cs" />
+    <Compile Include="Controllers\PresupuestoController.cs" />
+    <Compile Include="Controllers\PresupuestoDetalleController.cs" />
+    <Compile Include="Controllers\ReportesController.cs" />
+    <Compile Include="Controllers\ResumenAnualController.cs" />
+    <Compile Include="Controllers\TransaccionController.cs" />
+    <Compile Include="Controllers\UsuarioController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Models\Categoria.cs" />
+    <Compile Include="Models\Deuda.cs" />
+    <Compile Include="Models\FinanzasContext.cs" />
+    <Compile Include="Models\PagoDeuda.cs" />
+    <Compile Include="Models\Presupuesto.cs" />
+    <Compile Include="Models\PresupuestoDetalle.cs" />
+    <Compile Include="Models\ResumenAnual.cs" />
+    <Compile Include="Models\Transaccion.cs" />
+    <Compile Include="Models\Usuario.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ViewModels\AccountViewModels.cs" />
+    <Compile Include="ViewModels\DashboardViewModel.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\_ViewStart.cshtml" />
+    <Content Include="Views\Shared\_Layout.cshtml" />
+    <Content Include="Views\Shared\_FormTransaccion.cshtml" />
+    <Content Include="Views\Shared\_FormCategoria.cshtml" />
+    <Content Include="Views\Shared\_FormDeuda.cshtml" />
+    <Content Include="Views\Shared\_FormResumenAnual.cshtml" />
+    <Content Include="Views\Account\Login.cshtml" />
+    <Content Include="Views\Account\Register.cshtml" />
+    <Content Include="Views\Home\Index.cshtml" />
+    <Content Include="Views\Usuario\Index.cshtml" />
+    <Content Include="Views\Usuario\Create.cshtml" />
+    <Content Include="Views\Usuario\Edit.cshtml" />
+    <Content Include="Views\Usuario\Delete.cshtml" />
+    <Content Include="Views\Usuario\Details.cshtml" />
+    <Content Include="Views\Categoria\Index.cshtml" />
+    <Content Include="Views\Categoria\Create.cshtml" />
+    <Content Include="Views\Categoria\Edit.cshtml" />
+    <Content Include="Views\Categoria\Delete.cshtml" />
+    <Content Include="Views\Categoria\Details.cshtml" />
+    <Content Include="Views\Presupuesto\Index.cshtml" />
+    <Content Include="Views\Presupuesto\Create.cshtml" />
+    <Content Include="Views\Presupuesto\Edit.cshtml" />
+    <Content Include="Views\Presupuesto\Delete.cshtml" />
+    <Content Include="Views\Presupuesto\Details.cshtml" />
+    <Content Include="Views\PresupuestoDetalle\Create.cshtml" />
+    <Content Include="Views\PresupuestoDetalle\Edit.cshtml" />
+    <Content Include="Views\PresupuestoDetalle\Delete.cshtml" />
+    <Content Include="Views\Transaccion\Index.cshtml" />
+    <Content Include="Views\Transaccion\Create.cshtml" />
+    <Content Include="Views\Transaccion\Edit.cshtml" />
+    <Content Include="Views\Transaccion\Delete.cshtml" />
+    <Content Include="Views\Transaccion\Details.cshtml" />
+    <Content Include="Views\Deuda\Index.cshtml" />
+    <Content Include="Views\Deuda\Create.cshtml" />
+    <Content Include="Views\Deuda\Edit.cshtml" />
+    <Content Include="Views\Deuda\Delete.cshtml" />
+    <Content Include="Views\Deuda\Details.cshtml" />
+    <Content Include="Views\PagoDeuda\Create.cshtml" />
+    <Content Include="Views\PagoDeuda\Edit.cshtml" />
+    <Content Include="Views\PagoDeuda\Delete.cshtml" />
+    <Content Include="Views\ResumenAnual\Index.cshtml" />
+    <Content Include="Views\ResumenAnual\Create.cshtml" />
+    <Content Include="Views\ResumenAnual\Edit.cshtml" />
+    <Content Include="Views\ResumenAnual\Delete.cshtml" />
+    <Content Include="Views\Reportes\Index.cshtml" />
+    <Content Include="Views\Reportes\Transacciones.cshtml" />
+    <Content Include="Views\Reportes\Deudas.cshtml" />
+    <Content Include="Views\Reportes\Presupuesto.cshtml" />
+    <Content Include="Views\Reportes\ResumenAnual.cshtml" />
+    <Content Include="database\init.sql" />
+    <Content Include="docker-compose.yml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\web.config" />
@@ -110,8 +186,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
-    <Folder Include="Controllers\" />
-    <Folder Include="Models\" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
