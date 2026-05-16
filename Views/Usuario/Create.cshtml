@@ -1,7 +1,7 @@
 @model gestor_financiero.Models.Usuario
 @{ ViewBag.Title = "Nuevo usuario"; }
 <div class="max-w-xl bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-    <p class="text-sm text-slate-600 mb-4">Sugerencia: para crear cuentas con contraseña, usa la página de <a href="@Url.Action("Register", "Account")" class="text-brand-600 underline">registro</a>.</p>
+    <p class="text-sm text-slate-600 mb-4">Sugerencia: para crear cuentas con contraseña, usa la página de <a href="@Url.Action("Register", "Account")" class="text-indigo-600 underline">registro</a>.</p>
     @using (Html.BeginForm())
     {
         @Html.AntiForgeryToken()
@@ -12,7 +12,7 @@
             </div>
         </div>
         <div class="flex gap-2 pt-4">
-            <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-medium">Crear</button>
+            <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium">Crear</button>
             <a href="@Url.Action("Index")" class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium">Cancelar</a>
         </div>
     }

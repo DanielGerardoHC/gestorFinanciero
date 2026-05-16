@@ -11,45 +11,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewBag.Title - Gestor Financiero</title>
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50:  '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe',
-                            300: '#a5b4fc', 400: '#818cf8', 500: '#6366f1',
-                            600: '#4f46e5', 700: '#4338ca', 800: '#3730a3',
-                            900: '#312e81'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif']
-                    }
-                }
-            }
-        }
-    </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@latest/font/lucide.css">
-    <style>
-        [x-cloak] { display: none; }
-        body { font-family: 'Inter', system-ui, sans-serif; }
-        .sidebar-link { @@apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-300 hover:bg-brand-700 hover:text-white transition-all; }
-        .sidebar-link.active { @@apply bg-brand-600 text-white shadow-lg shadow-brand-600/30; }
-    </style>
+    <!-- Tailwind 3 compilado localmente (lo genera "npm run build:css") -->
+    <link rel="stylesheet" href="~/Content/css/app.css">
+
+    <!-- Lucide icons (fuente local) -->
+    <link rel="stylesheet" href="~/Content/css/lucide.css">
+
     @RenderSection("Styles", required: false)
 </head>
 <body class="bg-slate-50 min-h-screen">
 @if (isAuth)
 {
     <div class="flex min-h-screen">
-        <!-- Sidebar -->
         <aside class="hidden md:flex md:flex-col w-64 bg-gradient-to-b from-slate-900 to-slate-800 text-white">
             <div class="px-6 py-6 border-b border-slate-700">
                 <a href="@Url.Action("Index", "Home")" class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-brand-400 to-brand-600 rounded-xl flex items-center justify-center font-bold text-lg shadow-lg">
+                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-xl flex items-center justify-center font-bold text-lg shadow-lg">
                         $
                     </div>
                     <div>
@@ -61,50 +38,50 @@
             <nav class="flex-1 px-3 py-4 space-y-1">
                 <a href="@Url.Action("Index", "Home")"
                    class="sidebar-link @(currentController == "Home" ? "active" : "")">
-                    <i class="lucide lucide-layout-dashboard text-lg"></i>
+                    <i class="icon-layout-dashboard text-lg"></i>
                     <span>Dashboard</span>
                 </a>
                 <a href="@Url.Action("Index", "Transaccion")"
                    class="sidebar-link @(currentController == "Transaccion" ? "active" : "")">
-                    <i class="lucide lucide-arrow-right-left text-lg"></i>
+                    <i class="icon-arrow-right-left text-lg"></i>
                     <span>Transacciones</span>
                 </a>
                 <a href="@Url.Action("Index", "Presupuesto")"
                    class="sidebar-link @(currentController == "Presupuesto" || currentController == "PresupuestoDetalle" ? "active" : "")">
-                    <i class="lucide lucide-target text-lg"></i>
+                    <i class="icon-target text-lg"></i>
                     <span>Presupuestos</span>
                 </a>
                 <a href="@Url.Action("Index", "Categoria")"
                    class="sidebar-link @(currentController == "Categoria" ? "active" : "")">
-                    <i class="lucide lucide-tag text-lg"></i>
+                    <i class="icon-tag text-lg"></i>
                     <span>Categorías</span>
                 </a>
                 <a href="@Url.Action("Index", "Deuda")"
                    class="sidebar-link @(currentController == "Deuda" || currentController == "PagoDeuda" ? "active" : "")">
-                    <i class="lucide lucide-credit-card text-lg"></i>
+                    <i class="icon-credit-card text-lg"></i>
                     <span>Deudas</span>
                 </a>
                 <a href="@Url.Action("Index", "ResumenAnual")"
                    class="sidebar-link @(currentController == "ResumenAnual" ? "active" : "")">
-                    <i class="lucide lucide-bar-chart-3 text-lg"></i>
+                    <i class="icon-chart-column text-lg"></i>
                     <span>Resumen Anual</span>
                 </a>
                 <a href="@Url.Action("Index", "Reportes")"
                    class="sidebar-link @(currentController == "Reportes" ? "active" : "")">
-                    <i class="lucide lucide-file-text text-lg"></i>
+                    <i class="icon-file-text text-lg"></i>
                     <span>Reportes</span>
                 </a>
                 <div class="pt-4 mt-4 border-t border-slate-700">
                     <a href="@Url.Action("Index", "Usuario")"
                        class="sidebar-link @(currentController == "Usuario" ? "active" : "")">
-                        <i class="lucide lucide-users text-lg"></i>
+                        <i class="icon-users text-lg"></i>
                         <span>Usuarios</span>
                     </a>
                 </div>
             </nav>
             <div class="px-4 py-4 border-t border-slate-700">
                 <div class="flex items-center gap-3 px-2 py-2 rounded-lg bg-slate-800/50">
-                    <div class="w-9 h-9 bg-gradient-to-br from-brand-400 to-brand-600 rounded-full flex items-center justify-center font-semibold text-sm">
+                    <div class="w-9 h-9 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-full flex items-center justify-center font-semibold text-sm">
                         @initial
                     </div>
                     <div class="flex-1 min-w-0">
@@ -115,25 +92,37 @@
                     {
                         @Html.AntiForgeryToken()
                         <button type="submit" class="text-slate-400 hover:text-white" title="Cerrar sesión">
-                            <i class="lucide lucide-log-out text-lg"></i>
+                            <i class="icon-log-out text-lg"></i>
                         </button>
                     }
                 </div>
             </div>
         </aside>
 
-        <!-- Main content -->
         <div class="flex-1 flex flex-col">
             <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
-                <div>
-                    <h1 class="text-xl font-semibold text-slate-800">@(ViewBag.Title ?? "Dashboard")</h1>
-                    @if (ViewBag.Subtitle != null) {
-                        <p class="text-sm text-slate-500">@ViewBag.Subtitle</p>
+                <div class="flex items-center gap-3">
+                    @if (currentController != "Home")
+                    {
+                        <button type="button" onclick="if(document.referrer && document.referrer.indexOf(location.host)>-1){history.back();}else{location.href='@Url.Action("Index", "Home")';}"
+                                class="w-9 h-9 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center justify-center text-slate-600 transition-colors"
+                                title="Volver">
+                            <i class="icon-arrow-left text-lg"></i>
+                        </button>
                     }
+                    <div>
+                        <h1 class="text-xl font-semibold text-slate-800">@(ViewBag.Title ?? "Dashboard")</h1>
+                        @if (ViewBag.Subtitle != null) {
+                            <p class="text-sm text-slate-500">@ViewBag.Subtitle</p>
+                        }
+                    </div>
                 </div>
                 <div class="flex items-center gap-3">
-                    <a href="@Url.Action("Create", "Transaccion")" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-medium text-sm shadow-sm transition-colors">
-                        <i class="lucide lucide-plus text-base"></i> Nueva transacción
+                    <a href="@Url.Action("Index", "Home")" class="hidden sm:inline-flex items-center gap-1 px-3 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg text-sm font-medium" title="Ir al dashboard">
+                        <i class="icon-house text-base"></i>
+                    </a>
+                    <a href="@Url.Action("Create", "Transaccion")" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium text-sm shadow-sm transition-colors">
+                        <i class="icon-plus text-base"></i> Nueva transacción
                     </a>
                 </div>
             </header>
@@ -142,13 +131,13 @@
                 @if (TempData["Success"] != null)
                 {
                     <div class="mb-4 px-4 py-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg flex items-center gap-2">
-                        <i class="lucide lucide-check-circle"></i> @TempData["Success"]
+                        <i class="icon-circle-check"></i> @TempData["Success"]
                     </div>
                 }
                 @if (TempData["Error"] != null)
                 {
                     <div class="mb-4 px-4 py-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg flex items-center gap-2">
-                        <i class="lucide lucide-alert-circle"></i> @TempData["Error"]
+                        <i class="icon-circle-alert"></i> @TempData["Error"]
                     </div>
                 }
                 @RenderBody()
@@ -160,8 +149,7 @@ else
 {
     @RenderBody()
 }
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Chart.js solo se carga en las paginas que lo usan (via @@section Scripts) -->
     @RenderSection("Scripts", required: false)
 </body>
 </html>

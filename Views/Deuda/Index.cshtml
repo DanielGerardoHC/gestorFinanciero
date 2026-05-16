@@ -11,8 +11,8 @@
         <div class="text-rose-100 text-xs uppercase tracking-wide">Deuda total</div>
         <div class="text-3xl font-bold">@money(total)</div>
     </div>
-    <a href="@Url.Action("Create")" class="inline-flex items-center gap-1 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium">
-        <i class="lucide lucide-plus"></i> Nueva deuda
+    <a href="@Url.Action("Create")" class="inline-flex items-center gap-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">
+        <i class="icon-plus"></i> Nueva deuda
     </a>
 </div>
 
@@ -23,10 +23,10 @@
             <div class="flex items-start justify-between mb-3">
                 <div>
                     <div class="font-semibold text-slate-800 text-lg">@d.Nombre</div>
-                    <div class="text-xs text-slate-500">@d.Usuario?.Nombre</div>
+                    <div class="text-xs text-slate-500">@(d.Usuario != null ? d.Usuario.Nombre : "")</div>
                 </div>
                 <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center">
-                    <i class="lucide lucide-credit-card"></i>
+                    <i class="icon-credit-card"></i>
                 </div>
             </div>
             <div class="grid grid-cols-3 gap-3 mb-4">
@@ -48,7 +48,7 @@
                 <div class="text-xs text-slate-500 italic mb-3">@d.Notas</div>
             }
             <div class="flex gap-2 flex-wrap">
-                <a href="@Url.Action("Details", new { id = d.IdDeuda })" class="text-sm px-3 py-1.5 bg-brand-50 text-brand-700 hover:bg-brand-100 rounded-lg font-medium">Ver pagos</a>
+                <a href="@Url.Action("Details", new { id = d.IdDeuda })" class="text-sm px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg font-medium">Ver pagos</a>
                 <a href="@Url.Action("Create", "PagoDeuda", new { idDeuda = d.IdDeuda })" class="text-sm px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg font-medium">+ Pago</a>
                 <a href="@Url.Action("Edit", new { id = d.IdDeuda })" class="text-sm px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg font-medium">Editar</a>
                 <a href="@Url.Action("Delete", new { id = d.IdDeuda })" class="text-sm px-3 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg font-medium">Eliminar</a>

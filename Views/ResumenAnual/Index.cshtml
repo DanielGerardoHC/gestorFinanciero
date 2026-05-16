@@ -6,8 +6,8 @@
 }
 
 <div class="flex justify-end mb-4">
-    <a href="@Url.Action("Create")" class="inline-flex items-center gap-1 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium">
-        <i class="lucide lucide-plus"></i> Nuevo resumen
+    <a href="@Url.Action("Create")" class="inline-flex items-center gap-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">
+        <i class="icon-plus"></i> Nuevo resumen
     </a>
 </div>
 
@@ -43,7 +43,7 @@
                 var balance = (r.Ingresos ?? 0) - (r.GastosFijos ?? 0) - (r.GastosVariables ?? 0) - (r.Deudas ?? 0);
                 <tr class="hover:bg-slate-50">
                     <td class="px-6 py-3 font-semibold">@r.Anio</td>
-                    <td class="px-6 py-3">@r.Usuario?.Nombre</td>
+                    <td class="px-6 py-3">@(r.Usuario != null ? r.Usuario.Nombre : "")</td>
                     <td class="px-6 py-3 text-right text-emerald-600">@money(r.Ingresos ?? 0)</td>
                     <td class="px-6 py-3 text-right text-sky-600">@money(r.Ahorros ?? 0)</td>
                     <td class="px-6 py-3 text-right">@money(r.GastosFijos ?? 0)</td>
@@ -51,8 +51,8 @@
                     <td class="px-6 py-3 text-right text-rose-600">@money(r.Deudas ?? 0)</td>
                     <td class="px-6 py-3 text-right font-bold @(balance >= 0 ? "text-emerald-600" : "text-rose-600")">@money(balance)</td>
                     <td class="px-6 py-3 text-right">
-                        <a href="@Url.Action("Edit", new { id = r.IdResumen })" class="text-brand-600"><i class="lucide lucide-pencil text-sm"></i></a>
-                        <a href="@Url.Action("Delete", new { id = r.IdResumen })" class="text-rose-600 ml-2"><i class="lucide lucide-trash-2 text-sm"></i></a>
+                        <a href="@Url.Action("Edit", new { id = r.IdResumen })" class="text-indigo-600"><i class="icon-pencil text-sm"></i></a>
+                        <a href="@Url.Action("Delete", new { id = r.IdResumen })" class="text-rose-600 ml-2"><i class="icon-trash-2 text-sm"></i></a>
                     </td>
                 </tr>
             }
@@ -61,6 +61,7 @@
 </div>
 
 @section Scripts {
+<script src="~/Scripts/chart.umd.min.js"></script>
 <script>
     const data = @Html.Raw(System.Web.Helpers.Json.Encode(Model.Select(r => new {
         anio = r.Anio,

@@ -9,17 +9,17 @@
     var pctTotal = totalEstimado > 0 ? Math.Min(100, (double)(totalReal / totalEstimado) * 100) : 0;
 }
 
-<div class="bg-gradient-to-r from-brand-600 to-brand-800 text-white rounded-xl p-6 mb-6 shadow-lg">
+<div class="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white rounded-xl p-6 mb-6 shadow-lg">
     <div class="flex items-center justify-between flex-wrap gap-4">
         <div>
-            <div class="text-brand-200 text-sm">Presupuesto de</div>
+            <div class="text-indigo-200 text-sm">Presupuesto de</div>
             <h2 class="text-3xl font-bold capitalize">@nombreMes @Model.Anio</h2>
-            <div class="text-brand-200 text-sm mt-1">@Model.Usuario?.Nombre</div>
+            <div class="text-indigo-200 text-sm mt-1">@(Model.Usuario != null ? Model.Usuario.Nombre : "")</div>
         </div>
         <div class="text-right">
-            <div class="text-brand-200 text-xs uppercase tracking-wide">Total ejecutado</div>
-            <div class="text-3xl font-bold">@money(totalReal) <span class="text-base text-brand-200 font-normal">/ @money(totalEstimado)</span></div>
-            <div class="w-full md:w-64 bg-brand-900/40 rounded-full h-2 mt-2 overflow-hidden">
+            <div class="text-indigo-200 text-xs uppercase tracking-wide">Total ejecutado</div>
+            <div class="text-3xl font-bold">@money(totalReal) <span class="text-base text-indigo-200 font-normal">/ @money(totalEstimado)</span></div>
+            <div class="w-full md:w-64 bg-indigo-900/40 rounded-full h-2 mt-2 overflow-hidden">
                 <div class="bg-white h-full rounded-full" style="width:@(pctTotal.ToString("0.##", CultureInfo.InvariantCulture))%"></div>
             </div>
         </div>
@@ -27,8 +27,8 @@
 </div>
 
 <div class="flex justify-end mb-4">
-    <a href="@Url.Action("Create", "PresupuestoDetalle", new { idPresupuesto = Model.IdPresupuesto })" class="inline-flex items-center gap-1 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-sm font-medium">
-        <i class="lucide lucide-plus"></i> Agregar categoría
+    <a href="@Url.Action("Create", "PresupuestoDetalle", new { idPresupuesto = Model.IdPresupuesto })" class="inline-flex items-center gap-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">
+        <i class="icon-plus"></i> Agregar categoría
     </a>
 </div>
 
@@ -41,8 +41,8 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5">
             <div class="flex items-start justify-between mb-2">
                 <div>
-                    <div class="font-semibold text-slate-800">@d.Categoria?.Nombre</div>
-                    <div class="text-xs text-slate-500">@d.Categoria?.Tipo</div>
+                    <div class="font-semibold text-slate-800">@(d.Categoria != null ? d.Categoria.Nombre : "")</div>
+                    <div class="text-xs text-slate-500">@(d.Categoria != null ? d.Categoria.Tipo : "")</div>
                 </div>
                 <div class="text-right">
                     <div class="text-lg font-bold text-slate-800">@money(d.Real)</div>
@@ -54,12 +54,12 @@
             </div>
             <div class="flex justify-between items-center mt-2 text-xs">
                 <span class="@(sobrepasado ? "text-rose-600 font-medium" : "text-slate-500")">
-                    @if (sobrepasado) { <i class="lucide lucide-alert-circle"></i><text> Sobrepasado por @money(d.Real - d.Estimado)</text> }
+                    @if (sobrepasado) { <i class="icon-circle-alert"></i><text> Sobrepasado por @money(d.Real - d.Estimado)</text> }
                     else { <text>@pct.ToString("0")% utilizado · Queda @money(d.Estimado - d.Real)</text> }
                 </span>
                 <div class="flex gap-2">
-                    <a href="@Url.Action("Edit", "PresupuestoDetalle", new { id = d.IdDetalle })" class="text-brand-600 hover:text-brand-700"><i class="lucide lucide-pencil text-sm"></i></a>
-                    <a href="@Url.Action("Delete", "PresupuestoDetalle", new { id = d.IdDetalle })" class="text-rose-600 hover:text-rose-700"><i class="lucide lucide-trash-2 text-sm"></i></a>
+                    <a href="@Url.Action("Edit", "PresupuestoDetalle", new { id = d.IdDetalle })" class="text-indigo-600 hover:text-indigo-700"><i class="icon-pencil text-sm"></i></a>
+                    <a href="@Url.Action("Delete", "PresupuestoDetalle", new { id = d.IdDetalle })" class="text-rose-600 hover:text-rose-700"><i class="icon-trash-2 text-sm"></i></a>
                 </div>
             </div>
         </div>

@@ -13,7 +13,7 @@
                 <div class="text-2xl font-bold text-slate-800">@money(Model.TotalIngresos)</div>
             </div>
             <div class="w-11 h-11 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center">
-                <i class="lucide lucide-trending-up text-xl"></i>
+                <i class="icon-trending-up text-xl"></i>
             </div>
         </div>
     </div>
@@ -24,7 +24,7 @@
                 <div class="text-2xl font-bold text-slate-800">@money(Model.TotalGastos)</div>
             </div>
             <div class="w-11 h-11 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center">
-                <i class="lucide lucide-trending-down text-xl"></i>
+                <i class="icon-trending-down text-xl"></i>
             </div>
         </div>
     </div>
@@ -34,8 +34,8 @@
                 <div class="text-sm text-slate-500 mb-1">Balance del mes</div>
                 <div class="text-2xl font-bold @(Model.Balance >= 0 ? "text-emerald-600" : "text-rose-600")">@money(Model.Balance)</div>
             </div>
-            <div class="w-11 h-11 bg-brand-100 text-brand-600 rounded-xl flex items-center justify-center">
-                <i class="lucide lucide-wallet text-xl"></i>
+            <div class="w-11 h-11 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center">
+                <i class="icon-wallet text-xl"></i>
             </div>
         </div>
     </div>
@@ -46,7 +46,7 @@
                 <div class="text-2xl font-bold text-slate-800">@money(Model.TotalDeudas)</div>
             </div>
             <div class="w-11 h-11 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center">
-                <i class="lucide lucide-credit-card text-xl"></i>
+                <i class="icon-credit-card text-xl"></i>
             </div>
         </div>
     </div>
@@ -75,7 +75,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <h3 class="font-semibold text-slate-800">Transacciones recientes</h3>
-            <a href="@Url.Action("Index", "Transaccion")" class="text-sm text-brand-600 hover:text-brand-700">Ver todas →</a>
+            <a href="@Url.Action("Index", "Transaccion")" class="text-sm text-indigo-600 hover:text-indigo-700">Ver todas →</a>
         </div>
         <div class="divide-y divide-slate-100">
             @if (!Model.TransaccionesRecientes.Any())
@@ -87,7 +87,7 @@
                 var isIngreso = tx.Categoria.Tipo == "INGRESO";
                 <div class="px-6 py-3 flex items-center gap-3">
                     <div class="w-10 h-10 rounded-lg flex items-center justify-center @(isIngreso ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600")">
-                        <i class="lucide @(isIngreso ? "lucide-arrow-down-left" : "lucide-arrow-up-right")"></i>
+                        <i class="@(isIngreso ? "icon-arrow-down-left" : "icon-arrow-up-right")"></i>
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="font-medium text-slate-800 text-sm truncate">@tx.Categoria.Nombre</div>
@@ -104,7 +104,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <h3 class="font-semibold text-slate-800">Deudas activas</h3>
-            <a href="@Url.Action("Index", "Deuda")" class="text-sm text-brand-600 hover:text-brand-700">Ver todas →</a>
+            <a href="@Url.Action("Index", "Deuda")" class="text-sm text-indigo-600 hover:text-indigo-700">Ver todas →</a>
         </div>
         <div class="divide-y divide-slate-100">
             @if (!Model.DeudasActivas.Any())
@@ -129,6 +129,7 @@
 </div>
 
 @section Scripts {
+<script src="~/Scripts/chart.umd.min.js"></script>
 <script>
     const meses    = @Html.Raw(System.Web.Helpers.Json.Encode(Model.SerieMensual.Select(s => s.Mes)));
     const ingresos = @Html.Raw(System.Web.Helpers.Json.Encode(Model.SerieMensual.Select(s => s.Ingresos)));
@@ -161,7 +162,11 @@
                 backgroundColor: ['#6366f1','#f43f5e','#f59e0b','#10b981','#06b6d4','#8b5cf6']
             }]
         },
-        options: { responsive: true, plugins: { legend: { position: 'bottom' } }, cutout: '60%' }
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } },
+            cutout: '60%'
+        }
     });
 </script>
 }

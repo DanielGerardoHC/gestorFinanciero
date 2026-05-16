@@ -10,10 +10,11 @@ Sistema web para gestión de finanzas personales: control de ingresos, gastos, p
 | ORM | Entity Framework 6.4 (Code First con BD existente) |
 | Base de datos | SQL Server 2022 (en contenedor Docker) |
 | Autenticación | Forms Authentication + PBKDF2 (`System.Web.Helpers.Crypto`) |
-| Frontend | Razor + Tailwind CSS (vía CDN) |
-| Iconos | Lucide |
-| Tipografía | Inter (Google Fonts) |
-| Gráficos | Chart.js 4.4 |
+| Frontend | Razor + Tailwind CSS 3.4 (compilado local) |
+| Iconos | Lucide (font local, sin CDN) |
+| Tipografía | Inter (woff2 local, sin CDN) |
+| Gráficos | Chart.js 4.4 (bundle local) |
+| Build tooling | Node.js + npm (solo para compilar assets) |
 | Containerización | Docker Compose |
 | PDF (opcional) | Rotativa o impresión del navegador con `@media print` |
 
@@ -25,6 +26,7 @@ Antes de empezar necesitas tener instalado en tu máquina:
 2. **.NET Framework 4.7.2 Developer Pack**.
 3. **Docker Desktop** corriendo en tu máquina (con WSL2 backend o Hyper-V).
 4. **PowerShell 5.1+** (viene con Windows 10/11).
+5. **Node.js 18+ con npm** — solo para compilar los assets del frontend (Tailwind, Chart.js, Lucide, fuentes). Una vez compilados, IIS sirve los archivos estáticos y Node no se vuelve a necesitar en runtime. Descarga desde https://nodejs.org/
 
 Opcionalmente, para inspeccionar la BD:
 - **SQL Server Management Studio (SSMS)** o **Azure Data Studio**.
@@ -134,6 +136,30 @@ En Visual Studio, abre **Tools → NuGet Package Manager → Package Manager Con
 ```powershell
 Install-Package EntityFramework -Version 6.4.4
 ```
+
+### 4.5. Instalar y compilar los assets del frontend (solo la primera vez)
+
+Desde una terminal de PowerShell o CMD parada en la raíz del proyecto:
+
+```powershell
+npm install
+npm run build
+```
+
+Esto:
+1. Descarga Tailwind CSS 3.4, Chart.js, Lucide y la fuente Inter a `node_modules/`.
+2. Copia los archivos JS/woff2 necesarios a `Scripts/` y `Content/fonts/` con `build-assets.js`.
+3. Compila el CSS de Tailwind con solo las clases que efectivamente usan las vistas (`tailwindcss -i Content/input.css -o Content/css/app.css --minify`).
+
+El resultado: `Content/css/app.css` (~20-40 KB minificado, comparado con ~3 MB del CDN play). El sitio carga instantáneo.
+
+**Durante el desarrollo**, si modificas las vistas y agregas clases nuevas de Tailwind, corre:
+
+```powershell
+npm run watch
+```
+
+Esto deja a Tailwind escuchando cambios y recompilando `app.css` automáticamente.
 
 ### 5. Compilar el proyecto
 

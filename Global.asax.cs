@@ -14,6 +14,7 @@ namespace gestor_financiero
             AreaRegistration.RegisterAllAreas();
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
+            DataSeeder.Seed();
         }
     }
 }

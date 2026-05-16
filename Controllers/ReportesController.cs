@@ -55,15 +55,18 @@ namespace gestor_financiero.Controllers
         {
             if (!id.HasValue)
             {
-                var primero = await db.Presupuestos.OrderByDescending(p => p.Anio).ThenByDescending(p => p.Mes).FirstOrDefaultAsync();
+                var primero = await db.Presupuestos
+                    .OrderByDescending(x => x.Anio)
+                    .ThenByDescending(x => x.Mes)
+                    .FirstOrDefaultAsync();
                 if (primero == null) return RedirectToAction("Index");
                 id = primero.IdPresupuesto;
             }
-            var p = await db.Presupuestos
+            var presupuesto = await db.Presupuestos
                 .Include(x => x.Usuario)
-                .Include(x => x.Detalles.Select(d => d.Categoria))
+                .Include(x => x.Detalles.Select(det => det.Categoria))
                 .FirstOrDefaultAsync(x => x.IdPresupuesto == id);
-            return View(p);
+            return View(presupuesto);
         }
 
         // -- Reporte Resumen Anual --
