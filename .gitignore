@@ -365,6 +365,10 @@ FodyWeavers.xsd
 # Variables de entorno locales (Docker)
 .env
 
+# Credenciales de deploy (MonsterASP, hosting)
+deploy.env
+publish/
+
 # Node / npm
 node_modules/
 npm-debug.log*

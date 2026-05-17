@@ -1,0 +1,94 @@
+name: Deploy a MonsterASP
+
+# Se dispara cuando:
+#  - haces push a la rama main o master
+#  - lo ejecutas manualmente desde la pestania Actions de GitHub
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build + Deploy
+    runs-on: windows-latest
+    # Necesitamos Windows porque el proyecto usa .NET Framework 4.8
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      # ============================================================
+      # FRONTEND: compilar Tailwind, copiar Chart.js, Lucide, fuentes
+      # ============================================================
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependencias npm
+        run: npm ci
+
+      - name: Compilar assets (Tailwind + libs)
+        run: npm run build
+
+      # ============================================================
+      # BACKEND: restaurar NuGet, compilar MVC 5 con MSBuild
+      # ============================================================
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup NuGet
+        uses: nuget/setup-nuget@v2
+
+      - name: Restaurar paquetes NuGet
+        run: nuget restore gestor_financiero.sln
+
+      # ============================================================
+      # SECRETS: inyectar credenciales en Web.Release.config
+      # ============================================================
+      - name: Inyectar cadena de conexion
+        shell: pwsh
+        run: |
+          $config = Get-Content Web.Release.config -Raw
+          $config = $config.Replace('__DB_HOST__',     '${{ secrets.DB_HOST }}')
+          $config = $config.Replace('__DB_NAME__',     '${{ secrets.DB_NAME }}')
+          $config = $config.Replace('__DB_USER__',     '${{ secrets.DB_USER }}')
+          $config = $config.Replace('__DB_PASSWORD__', '${{ secrets.DB_PASSWORD }}')
+          Set-Content Web.Release.config $config -NoNewline
+
+      # ============================================================
+      # PUBLISH: MSBuild en Release a la carpeta ./publish
+      # ============================================================
+      - name: Build + Publish a carpeta
+        run: |
+          msbuild gestor_financiero.csproj `
+            /p:Configuration=Release `
+            /p:DeployOnBuild=true `
+            /p:WebPublishMethod=FileSystem `
+            /p:publishUrl=publish `
+            /p:DeleteExistingFiles=true `
+            /verbosity:minimal
+
+      # ============================================================
+      # FTP: subir el contenido de publish/ a MonsterASP /wwwroot
+      # ============================================================
+      - name: Deploy via FTP a MonsterASP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./publish/
+          server-dir: /wwwroot/
+          protocol: ftp
+
+      - name: Resumen
+        if: success()
+        run: |
+          Write-Host "============================================================" -ForegroundColor Green
+          Write-Host "  Deploy completado." -ForegroundColor Green
+          Write-Host "  Tu sitio: https://gestor-financiero.runasp.net" -ForegroundColor Green
+          Write-Host "============================================================" -ForegroundColor Green
+        shell: pwsh
