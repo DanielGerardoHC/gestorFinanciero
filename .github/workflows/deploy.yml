@@ -93,6 +93,44 @@ jobs:
           Write-Host "OK. Archivos generados:"
           Get-ChildItem $publishDir | Select-Object Name, Length
 
+      # ============================================================
+      # COPIAR ASSETS NPM al publish folder (MSBuild no los incluye
+      # automaticamente porque no estan en el .csproj como <Content>)
+      # ============================================================
+      - name: Copiar assets de Tailwind/Lucide/Inter/Chart.js
+        shell: pwsh
+        run: |
+          $publishDir = Join-Path $env:GITHUB_WORKSPACE 'publish'
+
+          # Asegurar que existan las subcarpetas
+          New-Item -ItemType Directory -Path "$publishDir\Content\css"   -Force | Out-Null
+          New-Item -ItemType Directory -Path "$publishDir\Content\fonts" -Force | Out-Null
+          New-Item -ItemType Directory -Path "$publishDir\Scripts"       -Force | Out-Null
+
+          # Copiar todos los archivos generados por npm run build
+          if (Test-Path "Content\css") {
+            Copy-Item "Content\css\*" "$publishDir\Content\css\" -Recurse -Force
+            Write-Host "Content/css/ copiado"
+          }
+          if (Test-Path "Content\fonts") {
+            Copy-Item "Content\fonts\*" "$publishDir\Content\fonts\" -Recurse -Force
+            Write-Host "Content/fonts/ copiado"
+          }
+          if (Test-Path "Scripts\chart.umd.min.js") {
+            Copy-Item "Scripts\chart.umd.min.js" "$publishDir\Scripts\" -Force
+            Write-Host "Scripts/chart.umd.min.js copiado"
+          }
+
+          Write-Host ""
+          Write-Host "Assets en publish/Content/css/:"
+          Get-ChildItem "$publishDir\Content\css" | Select-Object Name, Length
+          Write-Host ""
+          Write-Host "Assets en publish/Content/fonts/:"
+          Get-ChildItem "$publishDir\Content\fonts" | Select-Object Name, Length
+          Write-Host ""
+          Write-Host "Assets en publish/Scripts/:"
+          Get-ChildItem "$publishDir\Scripts" | Select-Object Name, Length
+
       - name: Listar contenido de publish/ (debug)
         shell: pwsh
         run: |

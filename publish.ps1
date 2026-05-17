@@ -101,6 +101,25 @@ try {
         Write-Host "[ERROR] Fallo MSBuild" -ForegroundColor Red
         exit 1
     }
+
+    # Copiar assets generados por npm (Tailwind, Lucide, Inter, Chart.js).
+    # MSBuild no los incluye automaticamente porque no estan en el .csproj.
+    Write-Host ""
+    Write-Host "Copiando assets de npm al publish folder..." -ForegroundColor Yellow
+
+    New-Item -ItemType Directory -Path "$publishDir\Content\css"   -Force | Out-Null
+    New-Item -ItemType Directory -Path "$publishDir\Content\fonts" -Force | Out-Null
+    New-Item -ItemType Directory -Path "$publishDir\Scripts"       -Force | Out-Null
+
+    if (Test-Path 'Content\css') {
+        Copy-Item 'Content\css\*' "$publishDir\Content\css\" -Recurse -Force
+    }
+    if (Test-Path 'Content\fonts') {
+        Copy-Item 'Content\fonts\*' "$publishDir\Content\fonts\" -Recurse -Force
+    }
+    if (Test-Path 'Scripts\chart.umd.min.js') {
+        Copy-Item 'Scripts\chart.umd.min.js' "$publishDir\Scripts\" -Force
+    }
 }
 finally {
     # Restaurar Web.Release.config original (con placeholders)
