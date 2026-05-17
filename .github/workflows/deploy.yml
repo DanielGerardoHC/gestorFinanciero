@@ -25,10 +25,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          # No usamos cache: 'npm' aqui para no requerir package-lock.json en el repo.
+          # Si commiteas package-lock.json, podes agregar: cache: 'npm'
 
       - name: Instalar dependencias npm
-        run: npm ci
+        # Usamos "npm install" en vez de "npm ci" para que funcione con o sin lock file.
+        # Si commiteas package-lock.json, podes cambiarlo a "npm ci" (mas rapido y reproducible).
+        run: npm install
 
       - name: Compilar assets (Tailwind + libs)
         run: npm run build

@@ -374,7 +374,8 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
+# NOTA: package-lock.json SI debe commitearse para que los builds sean reproducibles
+# (GitHub Actions lo necesita para hacer "npm ci")
 
 # Assets generados por el build pipeline (los regenera 'npm run build')
 Content/css/app.css
