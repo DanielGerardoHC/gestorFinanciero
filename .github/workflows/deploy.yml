@@ -62,17 +62,46 @@ jobs:
           Set-Content Web.Release.config $config -NoNewline
 
       # ============================================================
-      # PUBLISH: MSBuild en Release a la carpeta ./publish
+      # PUBLISH: MSBuild en Release a la carpeta publish/
+      # Usamos ruta absoluta y todos los parametros que necesita WebPublish.
       # ============================================================
       - name: Build + Publish a carpeta
+        shell: pwsh
         run: |
+          $publishDir = Join-Path $env:GITHUB_WORKSPACE 'publish'
+          Write-Host "Publicando a: $publishDir"
+
           msbuild gestor_financiero.csproj `
             /p:Configuration=Release `
+            /p:Platform="AnyCPU" `
             /p:DeployOnBuild=true `
             /p:WebPublishMethod=FileSystem `
-            /p:publishUrl=publish `
+            /p:DeployDefaultTarget=WebPublish `
+            /p:publishUrl="$publishDir" `
             /p:DeleteExistingFiles=true `
+            /p:PrecompileBeforePublish=false `
+            /p:LastUsedBuildConfiguration=Release `
+            /p:VisualStudioVersion=17.0 `
             /verbosity:minimal
+
+          if (-not (Test-Path $publishDir)) {
+            Write-Host "ERROR: la carpeta publish no se genero." -ForegroundColor Red
+            Write-Host "Contenido del proyecto:"
+            Get-ChildItem -Recurse -Directory | Where-Object { $_.Name -like '*publish*' -or $_.Name -like '*bin*' } | Select-Object FullName
+            exit 1
+          }
+          Write-Host "OK. Archivos generados:"
+          Get-ChildItem $publishDir | Select-Object Name, Length
+
+      - name: Listar contenido de publish/ (debug)
+        shell: pwsh
+        run: |
+          $publishDir = Join-Path $env:GITHUB_WORKSPACE 'publish'
+          Write-Host "Total archivos en publish/:"
+          (Get-ChildItem $publishDir -Recurse -File).Count
+          Write-Host ""
+          Write-Host "Estructura de primer nivel:"
+          Get-ChildItem $publishDir | Format-Table Mode, Length, Name
 
       # ============================================================
       # FTP: subir el contenido de publish/ a MonsterASP /wwwroot
