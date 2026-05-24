@@ -11,21 +11,98 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewBag.Title - Gestor Financiero</title>
 
-    <!-- Tailwind 3 compilado localmente (lo genera "npm run build:css") -->
     <link rel="stylesheet" href="~/Content/css/app.css">
-
-    <!-- Lucide icons (fuente local) -->
     <link rel="stylesheet" href="~/Content/css/lucide.css">
+
+    <style>
+        /* === Drawer mobile (no depende de Tailwind para asegurarse que funcione) === */
+        @@media (max-width: 767px) {
+            #sidebar {
+                position: fixed !important;
+                top: 0; left: 0; bottom: 0;
+                width: 16rem;
+                transform: translateX(-100%);
+                transition: transform 0.25s ease;
+                z-index: 50;
+            }
+            body.sb-open #sidebar { transform: translateX(0); }
+
+            #sidebar-backdrop {
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 40;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.2s ease;
+            }
+            body.sb-open #sidebar-backdrop {
+                opacity: 1;
+                pointer-events: auto;
+            }
+            body.sb-open { overflow: hidden; }
+        }
+        @@media (min-width: 768px) {
+            #sidebar-backdrop, .mobile-only { display: none !important; }
+        }
+
+        /* === Page loader (overlay con spinner al navegar entre paginas) === */
+        #page-loader {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.92);
+            -webkit-backdrop-filter: blur(2px);
+            backdrop-filter: blur(2px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        body.is-loading #page-loader {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #page-loader .loader-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        #page-loader .spinner {
+            width: 56px;
+            height: 56px;
+            border: 4px solid #e0e7ff;
+            border-top-color: #4f46e5;
+            border-radius: 50%;
+            animation: pl-spin 0.7s linear infinite;
+        }
+        #page-loader .loader-text {
+            font-size: 0.875rem;
+            color: #4f46e5;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+        @@keyframes pl-spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 
     @RenderSection("Styles", required: false)
 </head>
 <body class="bg-slate-50 min-h-screen">
 @if (isAuth)
 {
+    <!-- Backdrop (solo aparece cuando body tiene clase sb-open) -->
+    <div id="sidebar-backdrop" onclick="closeSidebar()"></div>
+
     <div class="flex min-h-screen">
-        <aside class="hidden md:flex md:flex-col w-64 bg-gradient-to-b from-slate-900 to-slate-800 text-white">
-            <div class="px-6 py-6 border-b border-slate-700">
-                <a href="@Url.Action("Index", "Home")" class="flex items-center gap-3">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="w-64 flex flex-col bg-gradient-to-b from-slate-900 to-slate-800 text-white">
+            <div class="px-6 py-6 border-b border-slate-700 flex items-center justify-between">
+                <a href="@Url.Action("Index", "Home")" class="flex items-center gap-3" onclick="closeSidebar()">
                     <div class="w-10 h-10 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-xl flex items-center justify-center font-bold text-lg shadow-lg">
                         $
                     </div>
@@ -34,8 +111,13 @@
                         <div class="text-xs text-slate-400">Financiero</div>
                     </div>
                 </a>
+                <button class="mobile-only text-slate-400 hover:text-white text-2xl leading-none w-8 h-8 flex items-center justify-center"
+                        onclick="closeSidebar()" aria-label="Cerrar menu"
+                        style="font-family:Arial,sans-serif">
+                    &times;
+                </button>
             </div>
-            <nav class="flex-1 px-3 py-4 space-y-1">
+            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
                 <a href="@Url.Action("Index", "Home")"
                    class="sidebar-link @(currentController == "Home" ? "active" : "")">
                     <i class="icon-layout-dashboard text-lg"></i>
@@ -99,35 +181,43 @@
             </div>
         </aside>
 
-        <div class="flex-1 flex flex-col">
-            <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
-                <div class="flex items-center gap-3">
+        <!-- Main content -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <header class="bg-white border-b border-slate-200 px-4 sm:px-6 py-3 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                    <button class="mobile-only w-9 h-9 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center justify-center text-slate-600 shrink-0"
+                            onclick="openSidebar()" aria-label="Abrir menu">
+                        <i class="icon-menu text-lg"></i>
+                    </button>
+
                     @if (currentController != "Home")
                     {
                         <button type="button" onclick="if(document.referrer && document.referrer.indexOf(location.host)>-1){history.back();}else{location.href='@Url.Action("Index", "Home")';}"
-                                class="w-9 h-9 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center justify-center text-slate-600 transition-colors"
+                                class="w-9 h-9 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center justify-center text-slate-600 transition-colors shrink-0"
                                 title="Volver">
                             <i class="icon-arrow-left text-lg"></i>
                         </button>
                     }
-                    <div>
-                        <h1 class="text-xl font-semibold text-slate-800">@(ViewBag.Title ?? "Dashboard")</h1>
+                    <div class="min-w-0">
+                        <h1 class="text-base sm:text-xl font-semibold text-slate-800 truncate">@(ViewBag.Title ?? "Dashboard")</h1>
                         @if (ViewBag.Subtitle != null) {
-                            <p class="text-sm text-slate-500">@ViewBag.Subtitle</p>
+                            <p class="text-xs sm:text-sm text-slate-500 truncate">@ViewBag.Subtitle</p>
                         }
                     </div>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 shrink-0">
                     <a href="@Url.Action("Index", "Home")" class="hidden sm:inline-flex items-center gap-1 px-3 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg text-sm font-medium" title="Ir al dashboard">
                         <i class="icon-house text-base"></i>
                     </a>
-                    <a href="@Url.Action("Create", "Transaccion")" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium text-sm shadow-sm transition-colors">
-                        <i class="icon-plus text-base"></i> Nueva transacción
+                    <a href="@Url.Action("Create", "Transaccion")"
+                       class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium text-sm shadow-sm">
+                        <i class="icon-plus text-base"></i>
+                        <span class="hidden sm:inline">Nueva transacción</span>
                     </a>
                 </div>
             </header>
 
-            <main class="flex-1 p-6">
+            <main class="flex-1 p-4 sm:p-6 min-w-0">
                 @if (TempData["Success"] != null)
                 {
                     <div class="mb-4 px-4 py-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg flex items-center gap-2">
@@ -144,12 +234,91 @@
             </main>
         </div>
     </div>
+
+    <script>
+        function openSidebar() { document.body.classList.add('sb-open'); }
+        function closeSidebar() { document.body.classList.remove('sb-open'); }
+
+        // Cerrar con ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeSidebar();
+        });
+
+        // Si la pantalla se agranda (rotar tablet a horizontal), cerrar drawer
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 768) closeSidebar();
+        });
+
+        // Al hacer click en un link del nav, cerrar drawer (por si la navegacion es lenta)
+        document.querySelectorAll('#sidebar nav a').forEach(function(a) {
+            a.addEventListener('click', function() { closeSidebar(); });
+        });
+    </script>
 }
 else
 {
     @RenderBody()
 }
-    <!-- Chart.js solo se carga en las paginas que lo usan (via @@section Scripts) -->
+
+    <!-- Loader global: aparece al navegar entre paginas o enviar formularios -->
+    <div id="page-loader" aria-hidden="true">
+        <div class="loader-box">
+            <div class="spinner"></div>
+            <div class="loader-text">Cargando...</div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            var loaderTimer = null;
+
+            function showLoader() {
+                // Pequeno delay para evitar el flash en navegaciones casi instantaneas
+                loaderTimer = setTimeout(function() {
+                    document.body.classList.add('is-loading');
+                }, 120);
+            }
+            function hideLoader() {
+                clearTimeout(loaderTimer);
+                document.body.classList.remove('is-loading');
+            }
+
+            // Mostrar loader al hacer click en cualquier link interno
+            document.addEventListener('click', function(e) {
+                var a = e.target.closest('a');
+                if (!a) return;
+                var href = a.getAttribute('href');
+                // Excluir: vacios, anchors, javascript:, target=_blank, descargas
+                if (!href) return;
+                if (href.charAt(0) === '#') return;
+                if (href.indexOf('javascript:') === 0) return;
+                if (a.target === '_blank') return;
+                if (a.hasAttribute('download')) return;
+                // Solo navegaciones al mismo origen
+                try {
+                    var url = new URL(a.href, window.location.origin);
+                    if (url.origin !== window.location.origin) return;
+                    // Si solo cambia el hash de la misma pagina, no mostrar
+                    if (url.pathname === window.location.pathname && url.search === window.location.search) return;
+                } catch (err) { return; }
+                showLoader();
+            });
+
+            // Mostrar loader al enviar cualquier formulario
+            document.addEventListener('submit', function(e) {
+                if (e.target && e.target.tagName === 'FORM') {
+                    // No mostrar si el form tiene atributo data-no-loader
+                    if (e.target.getAttribute('data-no-loader') === 'true') return;
+                    showLoader();
+                }
+            });
+
+            // Ocultar al cargar la pagina (incluye back/forward del browser)
+            window.addEventListener('pageshow', hideLoader);
+            window.addEventListener('load', hideLoader);
+        })();
+    </script>
+
     @RenderSection("Scripts", required: false)
 </body>
 </html>

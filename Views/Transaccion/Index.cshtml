@@ -13,7 +13,7 @@
         "bg-slate-100 text-slate-700";
 }
 
-<div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+<div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-x-auto">
     @using (Html.BeginForm("Index", "Transaccion", FormMethod.Get, new { @class = "px-6 py-4 border-b border-slate-100 grid grid-cols-1 md:grid-cols-4 gap-3 items-end" }))
     {
         <div>
@@ -36,7 +36,7 @@
         </div>
     }
 
-    <table class="w-full text-sm">
+    <table class="w-full min-w-[700px] text-sm">
         <thead class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wide">
             <tr>
                 <th class="text-left px-6 py-3 font-medium">Fecha</th>
