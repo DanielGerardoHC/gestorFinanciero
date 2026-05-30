@@ -90,31 +90,52 @@ jobs:
           DB_PASS:   ${{ secrets.DB_PASSWORD }}
           DB_NAME:   ${{ secrets.DB_NAME }}
         run: |
+          # Diagnostico: verificar sqlcmd y conectividad
+          Write-Host "Verificando sqlcmd..."
+          $sqlcmdPath = (Get-Command sqlcmd -ErrorAction SilentlyContinue)?.Source
+          if (-not $sqlcmdPath) {
+            Write-Host "ERROR: sqlcmd no esta instalado en el runner." -ForegroundColor Red
+            exit 1
+          }
+          Write-Host "  sqlcmd: $sqlcmdPath"
+
+          Write-Host "Test de conexion a $env:DB_SERVER ..."
+          $testOut = & sqlcmd -S "$env:DB_SERVER" -U "$env:DB_USER" -P "$env:DB_PASS" `
+                              -d "$env:DB_NAME" -C -Q "SELECT 'CONEXION OK' AS test;" 2>&1
+          $testOut | ForEach-Object { Write-Host "  $_" }
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "ERROR: no se pudo conectar a la BD remota." -ForegroundColor Red
+            Write-Host "Revisa los secrets DB_HOST_REMOTE, DB_USER, DB_PASSWORD, DB_NAME." -ForegroundColor Yellow
+            exit 1
+          }
+
           function Invoke-Sql([string]$Sql) {
-            & sqlcmd -S "$env:DB_SERVER" -U "$env:DB_USER" -P "$env:DB_PASS" `
-                     -d "$env:DB_NAME" -C -b -Q $Sql
-            return $LASTEXITCODE
+            $out = & sqlcmd -S "$env:DB_SERVER" -U "$env:DB_USER" -P "$env:DB_PASS" `
+                            -d "$env:DB_NAME" -C -Q $Sql 2>&1
+            $rc = $LASTEXITCODE
+            $out | ForEach-Object { Write-Host "    $_" }
+            return $rc
           }
           function Invoke-SqlFile([string]$Path) {
-            & sqlcmd -S "$env:DB_SERVER" -U "$env:DB_USER" -P "$env:DB_PASS" `
-                     -d "$env:DB_NAME" -C -b -i $Path
-            return $LASTEXITCODE
+            Write-Host "    [debug] archivo: $Path (existe=$([System.IO.File]::Exists($Path)))" -ForegroundColor DarkGray
+            $out = & sqlcmd -S "$env:DB_SERVER" -U "$env:DB_USER" -P "$env:DB_PASS" `
+                            -d "$env:DB_NAME" -C -i $Path 2>&1
+            $rc = $LASTEXITCODE
+            $out | ForEach-Object { Write-Host "    $_" }
+            Write-Host "    [debug] sqlcmd exit code = $rc" -ForegroundColor DarkGray
+            return $rc
           }
           function Invoke-SqlScalar([string]$Sql) {
             $out = & sqlcmd -S "$env:DB_SERVER" -U "$env:DB_USER" -P "$env:DB_PASS" `
-                            -d "$env:DB_NAME" -C -b -h -1 -W -Q $Sql
-            return ($out | Where-Object { $_ -and $_.Trim() -ne '' } | Select-Object -First 1).Trim()
+                            -d "$env:DB_NAME" -C -h -1 -W -Q $Sql 2>&1
+            $val = ($out | Where-Object { $_ -and ($_ -match '^\s*\d+\s*$') } | Select-Object -First 1)
+            if ($val) { return $val.Trim() } else { return "" }
           }
 
           # 1. Asegurar que existe la tabla de tracking
+          Write-Host ""
           Write-Host "Asegurando tabla _AppliedMigrations..." -ForegroundColor Cyan
-          $bootstrap = @"
-          IF OBJECT_ID('dbo._AppliedMigrations', 'U') IS NULL
-          CREATE TABLE _AppliedMigrations (
-              nombre VARCHAR(200) NOT NULL PRIMARY KEY,
-              aplicada_en DATETIME NOT NULL DEFAULT GETUTCDATE()
-          );
-          "@
+          $bootstrap = "IF OBJECT_ID('dbo._AppliedMigrations', 'U') IS NULL CREATE TABLE _AppliedMigrations (nombre VARCHAR(200) NOT NULL PRIMARY KEY, aplicada_en DATETIME NOT NULL DEFAULT GETUTCDATE());"
           if ((Invoke-Sql $bootstrap) -ne 0) {
             Write-Host "ERROR creando _AppliedMigrations" -ForegroundColor Red
             exit 1
