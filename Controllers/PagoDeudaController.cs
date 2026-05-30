@@ -8,14 +8,17 @@ using gestor_financiero.Models;
 
 namespace gestor_financiero.Controllers
 {
-    public class PagoDeudaController : Controller
+    public class PagoDeudaController : BaseAuthController
     {
         private readonly FinanzasContext db = new FinanzasContext();
 
-        // GET: PagoDeuda
+        // GET: PagoDeuda -- solo pagos de deudas del usuario actual
         public async Task<ActionResult> Index(int? idDeuda)
         {
-            var query = db.PagosDeuda.Include(p => p.Deuda).AsQueryable();
+            var query = db.PagosDeuda
+                .Include(p => p.Deuda)
+                .Where(p => p.Deuda.IdUsuario == CurrentUserId);
+
             if (idDeuda.HasValue) query = query.Where(p => p.IdDeuda == idDeuda.Value);
 
             ViewBag.IdDeuda = idDeuda;
@@ -26,16 +29,21 @@ namespace gestor_financiero.Controllers
         public async Task<ActionResult> Details(int? id)
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            var pago = await db.PagosDeuda.Include(p => p.Deuda)
-                .FirstOrDefaultAsync(p => p.IdPago == id);
+            var pago = await db.PagosDeuda
+                .Include(p => p.Deuda)
+                .FirstOrDefaultAsync(p => p.IdPago == id && p.Deuda.IdUsuario == CurrentUserId);
             if (pago == null) return HttpNotFound();
             return View(pago);
         }
 
         // GET: PagoDeuda/Create
-        public ActionResult Create(int? idDeuda)
+        public async Task<ActionResult> Create(int? idDeuda)
         {
-            ViewBag.IdDeuda = new SelectList(db.Deudas, "IdDeuda", "Nombre", idDeuda);
+            // Solo deudas del usuario actual en el dropdown
+            var deudasUsuario = await db.Deudas
+                .Where(d => d.IdUsuario == CurrentUserId)
+                .ToListAsync();
+            ViewBag.IdDeuda = new SelectList(deudasUsuario, "IdDeuda", "Nombre", idDeuda);
             return View(new PagoDeuda { Fecha = DateTime.Today, IdDeuda = idDeuda ?? 0 });
         }
 
@@ -43,33 +51,29 @@ namespace gestor_financiero.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create([Bind(Include = "IdDeuda,Fecha,PagoMinimo,PagoExtra,Interes,Capital,SaldoRestante")] PagoDeuda pago)
         {
+            // Confirmar que la deuda destino es del usuario actual
+            var deuda = await db.Deudas
+                .FirstOrDefaultAsync(d => d.IdDeuda == pago.IdDeuda && d.IdUsuario == CurrentUserId);
+            if (deuda == null) return new HttpStatusCodeResult(HttpStatusCode.Forbidden);
+
             if (ModelState.IsValid)
             {
                 // Si no viene saldo_restante, recalcular contra el saldo actual de la deuda
                 if (!pago.SaldoRestante.HasValue)
-                {
-                    var deuda = await db.Deudas.FindAsync(pago.IdDeuda);
-                    if (deuda != null)
-                        pago.SaldoRestante = deuda.SaldoActual - pago.Capital;
-                }
+                    pago.SaldoRestante = deuda.SaldoActual - pago.Capital;
 
                 db.PagosDeuda.Add(pago);
 
-                // Actualizar saldo actual de la deuda si calculamos uno nuevo
-                if (pago.SaldoRestante.HasValue)
-                {
-                    var deuda = await db.Deudas.FindAsync(pago.IdDeuda);
-                    if (deuda != null)
-                    {
-                        deuda.SaldoActual = pago.SaldoRestante.Value;
-                        db.Entry(deuda).State = EntityState.Modified;
-                    }
-                }
+                // Actualizar saldo actual de la deuda
+                deuda.SaldoActual = pago.SaldoRestante.Value;
+                db.Entry(deuda).State = EntityState.Modified;
 
                 await db.SaveChangesAsync();
                 return RedirectToAction("Index", new { idDeuda = pago.IdDeuda });
             }
-            ViewBag.IdDeuda = new SelectList(db.Deudas, "IdDeuda", "Nombre", pago.IdDeuda);
+
+            var deudasUsuario = await db.Deudas.Where(d => d.IdUsuario == CurrentUserId).ToListAsync();
+            ViewBag.IdDeuda = new SelectList(deudasUsuario, "IdDeuda", "Nombre", pago.IdDeuda);
             return View(pago);
         }
 
@@ -77,9 +81,13 @@ namespace gestor_financiero.Controllers
         public async Task<ActionResult> Edit(int? id)
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            var pago = await db.PagosDeuda.FindAsync(id);
+            var pago = await db.PagosDeuda
+                .Include(p => p.Deuda)
+                .FirstOrDefaultAsync(p => p.IdPago == id && p.Deuda.IdUsuario == CurrentUserId);
             if (pago == null) return HttpNotFound();
-            ViewBag.IdDeuda = new SelectList(db.Deudas, "IdDeuda", "Nombre", pago.IdDeuda);
+
+            var deudasUsuario = await db.Deudas.Where(d => d.IdUsuario == CurrentUserId).ToListAsync();
+            ViewBag.IdDeuda = new SelectList(deudasUsuario, "IdDeuda", "Nombre", pago.IdDeuda);
             return View(pago);
         }
 
@@ -87,13 +95,32 @@ namespace gestor_financiero.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit([Bind(Include = "IdPago,IdDeuda,Fecha,PagoMinimo,PagoExtra,Interes,Capital,SaldoRestante")] PagoDeuda pago)
         {
+            // 1. Pago original es del usuario
+            var enBd = await db.PagosDeuda
+                .Include(p => p.Deuda)
+                .FirstOrDefaultAsync(p => p.IdPago == pago.IdPago && p.Deuda.IdUsuario == CurrentUserId);
+            if (enBd == null) return HttpNotFound();
+
+            // 2. Si cambian la deuda, la nueva también es del usuario
+            bool nuevaPerteneceAlUsuario = await db.Deudas
+                .AnyAsync(d => d.IdDeuda == pago.IdDeuda && d.IdUsuario == CurrentUserId);
+            if (!nuevaPerteneceAlUsuario) return new HttpStatusCodeResult(HttpStatusCode.Forbidden);
+
             if (ModelState.IsValid)
             {
-                db.Entry(pago).State = EntityState.Modified;
+                enBd.IdDeuda = pago.IdDeuda;
+                enBd.Fecha = pago.Fecha;
+                enBd.PagoMinimo = pago.PagoMinimo;
+                enBd.PagoExtra = pago.PagoExtra;
+                enBd.Interes = pago.Interes;
+                enBd.Capital = pago.Capital;
+                enBd.SaldoRestante = pago.SaldoRestante;
                 await db.SaveChangesAsync();
                 return RedirectToAction("Index", new { idDeuda = pago.IdDeuda });
             }
-            ViewBag.IdDeuda = new SelectList(db.Deudas, "IdDeuda", "Nombre", pago.IdDeuda);
+
+            var deudasUsuario = await db.Deudas.Where(d => d.IdUsuario == CurrentUserId).ToListAsync();
+            ViewBag.IdDeuda = new SelectList(deudasUsuario, "IdDeuda", "Nombre", pago.IdDeuda);
             return View(pago);
         }
 
@@ -101,8 +128,9 @@ namespace gestor_financiero.Controllers
         public async Task<ActionResult> Delete(int? id)
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            var pago = await db.PagosDeuda.Include(p => p.Deuda)
-                .FirstOrDefaultAsync(p => p.IdPago == id);
+            var pago = await db.PagosDeuda
+                .Include(p => p.Deuda)
+                .FirstOrDefaultAsync(p => p.IdPago == id && p.Deuda.IdUsuario == CurrentUserId);
             if (pago == null) return HttpNotFound();
             return View(pago);
         }
@@ -111,7 +139,11 @@ namespace gestor_financiero.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> DeleteConfirmed(int id)
         {
-            var pago = await db.PagosDeuda.FindAsync(id);
+            var pago = await db.PagosDeuda
+                .Include(p => p.Deuda)
+                .FirstOrDefaultAsync(p => p.IdPago == id && p.Deuda.IdUsuario == CurrentUserId);
+            if (pago == null) return HttpNotFound();
+
             int idDeuda = pago.IdDeuda;
             db.PagosDeuda.Remove(pago);
             await db.SaveChangesAsync();

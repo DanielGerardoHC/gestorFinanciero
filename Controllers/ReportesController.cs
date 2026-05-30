@@ -12,50 +12,43 @@ using gestor_financiero.Models;
 
 namespace gestor_financiero.Controllers
 {
-    [Authorize]
-    public class ReportesController : Controller
+    public class ReportesController : BaseAuthController
     {
         private readonly FinanzasContext db = new FinanzasContext();
 
         public ActionResult Index() => View();
 
-        // -- Reporte de Transacciones --
+        // -- Reporte de Transacciones (solo del usuario actual) --
         public async Task<ActionResult> Transacciones(DateTime? desde, DateTime? hasta)
         {
-            var userId = int.Parse(User.Identity.Name);
             var d = desde ?? new DateTime(DateTime.Today.Year, 1, 1);
             var h = hasta ?? DateTime.Today;
             var tx = await db.Transacciones
-                .Include(t => t.Categoria).Include(t => t.Usuario)
-                .Where(t => t.IdUsuario == userId && t.Fecha >= d && t.Fecha <= h)
+                .Include(t => t.Categoria)
+                .Where(t => t.IdUsuario == CurrentUserId && t.Fecha >= d && t.Fecha <= h)
                 .OrderBy(t => t.Fecha)
                 .ToListAsync();
             ViewBag.Desde = d; ViewBag.Hasta = h;
             return View(tx);
         }
 
-        // public ActionResult TransaccionesPdf(DateTime? desde, DateTime? hasta)
-        // {
-        //     return new Rotativa.ViewAsPdf("Transacciones", ...) { FileName = "Transacciones.pdf" };
-        // }
-
-        // -- Reporte de Deudas --
+        // -- Reporte de Deudas (solo del usuario actual) --
         public async Task<ActionResult> Deudas()
         {
-            var userId = int.Parse(User.Identity.Name);
             var deudas = await db.Deudas
                 .Include(d => d.Pagos)
-                .Where(d => d.IdUsuario == userId)
+                .Where(d => d.IdUsuario == CurrentUserId)
                 .ToListAsync();
             return View(deudas);
         }
 
-        // -- Reporte de Presupuesto --
+        // -- Reporte de Presupuesto (solo de presupuestos del usuario actual) --
         public async Task<ActionResult> Presupuesto(int? id)
         {
             if (!id.HasValue)
             {
                 var primero = await db.Presupuestos
+                    .Where(x => x.IdUsuario == CurrentUserId)
                     .OrderByDescending(x => x.Anio)
                     .ThenByDescending(x => x.Mes)
                     .FirstOrDefaultAsync();
@@ -63,19 +56,17 @@ namespace gestor_financiero.Controllers
                 id = primero.IdPresupuesto;
             }
             var presupuesto = await db.Presupuestos
-                .Include(x => x.Usuario)
                 .Include(x => x.Detalles.Select(det => det.Categoria))
-                .FirstOrDefaultAsync(x => x.IdPresupuesto == id);
+                .FirstOrDefaultAsync(x => x.IdPresupuesto == id && x.IdUsuario == CurrentUserId);
+            if (presupuesto == null) return HttpNotFound();
             return View(presupuesto);
         }
 
-        // -- Reporte Resumen Anual --
+        // -- Reporte Resumen Anual (solo del usuario actual) --
         public async Task<ActionResult> ResumenAnual()
         {
-            var userId = int.Parse(User.Identity.Name);
             var resumen = await db.ResumenesAnuales
-                .Include(r => r.Usuario)
-                .Where(r => r.IdUsuario == userId)
+                .Where(r => r.IdUsuario == CurrentUserId)
                 .OrderByDescending(r => r.Anio)
                 .ToListAsync();
             return View(resumen);

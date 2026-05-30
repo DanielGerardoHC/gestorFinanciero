@@ -7,15 +7,15 @@ using gestor_financiero.Models;
 
 namespace gestor_financiero.Controllers
 {
-    public class ResumenAnualController : Controller
+    public class ResumenAnualController : BaseAuthController
     {
         private readonly FinanzasContext db = new FinanzasContext();
 
-        // GET: ResumenAnual
+        // GET: ResumenAnual -- solo del usuario actual
         public async Task<ActionResult> Index()
         {
             var resumenes = db.ResumenesAnuales
-                .Include(r => r.Usuario)
+                .Where(r => r.IdUsuario == CurrentUserId)
                 .OrderByDescending(r => r.Anio);
             return View(await resumenes.ToListAsync());
         }
@@ -24,8 +24,8 @@ namespace gestor_financiero.Controllers
         public async Task<ActionResult> Details(int? id)
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            var resumen = await db.ResumenesAnuales.Include(r => r.Usuario)
-                .FirstOrDefaultAsync(r => r.IdResumen == id);
+            var resumen = await db.ResumenesAnuales
+                .FirstOrDefaultAsync(r => r.IdResumen == id && r.IdUsuario == CurrentUserId);
             if (resumen == null) return HttpNotFound();
             return View(resumen);
         }
@@ -33,18 +33,19 @@ namespace gestor_financiero.Controllers
         // GET: ResumenAnual/Create
         public ActionResult Create()
         {
-            ViewBag.IdUsuario = new SelectList(db.Usuarios, "IdUsuario", "Nombre");
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create([Bind(Include = "IdUsuario,Anio,Ingresos,Ahorros,GastosFijos,GastosVariables,Deudas")] ResumenAnual resumen)
+        public async Task<ActionResult> Create([Bind(Include = "Anio,Ingresos,Ahorros,GastosFijos,GastosVariables,Deudas")] ResumenAnual resumen)
         {
+            resumen.IdUsuario = CurrentUserId;
+
             bool existe = await db.ResumenesAnuales.AnyAsync(r =>
                 r.IdUsuario == resumen.IdUsuario && r.Anio == resumen.Anio);
             if (existe)
-                ModelState.AddModelError("", "Ya existe un resumen para ese usuario en ese año.");
+                ModelState.AddModelError("", "Ya tenés un resumen para ese año.");
 
             if (ModelState.IsValid)
             {
@@ -52,7 +53,6 @@ namespace gestor_financiero.Controllers
                 await db.SaveChangesAsync();
                 return RedirectToAction("Index");
             }
-            ViewBag.IdUsuario = new SelectList(db.Usuarios, "IdUsuario", "Nombre", resumen.IdUsuario);
             return View(resumen);
         }
 
@@ -60,23 +60,31 @@ namespace gestor_financiero.Controllers
         public async Task<ActionResult> Edit(int? id)
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            var resumen = await db.ResumenesAnuales.FindAsync(id);
+            var resumen = await db.ResumenesAnuales
+                .FirstOrDefaultAsync(r => r.IdResumen == id && r.IdUsuario == CurrentUserId);
             if (resumen == null) return HttpNotFound();
-            ViewBag.IdUsuario = new SelectList(db.Usuarios, "IdUsuario", "Nombre", resumen.IdUsuario);
             return View(resumen);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit([Bind(Include = "IdResumen,IdUsuario,Anio,Ingresos,Ahorros,GastosFijos,GastosVariables,Deudas")] ResumenAnual resumen)
+        public async Task<ActionResult> Edit([Bind(Include = "IdResumen,Anio,Ingresos,Ahorros,GastosFijos,GastosVariables,Deudas")] ResumenAnual resumen)
         {
+            var enBd = await db.ResumenesAnuales
+                .FirstOrDefaultAsync(r => r.IdResumen == resumen.IdResumen && r.IdUsuario == CurrentUserId);
+            if (enBd == null) return HttpNotFound();
+
             if (ModelState.IsValid)
             {
-                db.Entry(resumen).State = EntityState.Modified;
+                enBd.Anio = resumen.Anio;
+                enBd.Ingresos = resumen.Ingresos;
+                enBd.Ahorros = resumen.Ahorros;
+                enBd.GastosFijos = resumen.GastosFijos;
+                enBd.GastosVariables = resumen.GastosVariables;
+                enBd.Deudas = resumen.Deudas;
                 await db.SaveChangesAsync();
                 return RedirectToAction("Index");
             }
-            ViewBag.IdUsuario = new SelectList(db.Usuarios, "IdUsuario", "Nombre", resumen.IdUsuario);
             return View(resumen);
         }
 
@@ -84,8 +92,8 @@ namespace gestor_financiero.Controllers
         public async Task<ActionResult> Delete(int? id)
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            var resumen = await db.ResumenesAnuales.Include(r => r.Usuario)
-                .FirstOrDefaultAsync(r => r.IdResumen == id);
+            var resumen = await db.ResumenesAnuales
+                .FirstOrDefaultAsync(r => r.IdResumen == id && r.IdUsuario == CurrentUserId);
             if (resumen == null) return HttpNotFound();
             return View(resumen);
         }
@@ -94,7 +102,9 @@ namespace gestor_financiero.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> DeleteConfirmed(int id)
         {
-            var resumen = await db.ResumenesAnuales.FindAsync(id);
+            var resumen = await db.ResumenesAnuales
+                .FirstOrDefaultAsync(r => r.IdResumen == id && r.IdUsuario == CurrentUserId);
+            if (resumen == null) return HttpNotFound();
             db.ResumenesAnuales.Remove(resumen);
             await db.SaveChangesAsync();
             return RedirectToAction("Index");

@@ -1,36 +1,42 @@
-@model IEnumerable<gestor_financiero.Models.Usuario>
-@{ ViewBag.Title = "Usuarios"; }
+@model gestor_financiero.Models.Usuario
+@{ ViewBag.Title = "Mi perfil"; }
 
-<div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-x-auto">
-    <table class="w-full min-w-[700px] text-sm">
-        <thead class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wide">
-            <tr>
-                <th class="text-left px-6 py-3 font-medium">Usuario</th>
-                <th class="text-left px-6 py-3 font-medium">Email</th>
-                <th class="text-left px-6 py-3 font-medium">Registrado</th>
-                <th class="text-right px-6 py-3 font-medium">Acciones</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100">
-            @foreach (var u in Model)
-            {
-                <tr class="hover:bg-slate-50">
-                    <td class="px-6 py-3">
-                        <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 bg-gradient-to-br from-indigo-400 to-indigo-600 text-white rounded-full flex items-center justify-center font-semibold text-sm">
-                                @(u.Nombre.Substring(0,1).ToUpper())
-                            </div>
-                            <span class="font-medium text-slate-800">@u.Nombre</span>
-                        </div>
-                    </td>
-                    <td class="px-6 py-3 text-slate-600">@u.Email</td>
-                    <td class="px-6 py-3 text-slate-500">@u.FechaRegistro.ToString("dd MMM yyyy")</td>
-                    <td class="px-6 py-3 text-right">
-                        <a href="@Url.Action("Edit", new { id = u.IdUsuario })" class="text-indigo-600 hover:text-indigo-700"><i class="icon-pencil"></i></a>
-                        <a href="@Url.Action("Delete", new { id = u.IdUsuario })" class="text-rose-600 hover:text-rose-700 ml-3"><i class="icon-trash-2"></i></a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+<div class="max-w-2xl bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+    <div class="flex items-center gap-4 mb-6">
+        <div class="w-20 h-20 bg-gradient-to-br from-indigo-400 to-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-3xl">
+            @(Model.Nombre.Substring(0, 1).ToUpper())
+        </div>
+        <div>
+            <div class="text-2xl font-bold text-slate-800">@Model.Nombre</div>
+            <div class="text-sm text-slate-500">@Model.Email</div>
+        </div>
+    </div>
+
+    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm border-t border-slate-100 pt-6">
+        <div>
+            <dt class="text-xs text-slate-500 uppercase tracking-wide">Nombre completo</dt>
+            <dd class="font-medium text-slate-800 mt-1">@Model.Nombre</dd>
+        </div>
+        <div>
+            <dt class="text-xs text-slate-500 uppercase tracking-wide">Correo electrónico</dt>
+            <dd class="font-medium text-slate-800 mt-1">@Model.Email</dd>
+        </div>
+        <div>
+            <dt class="text-xs text-slate-500 uppercase tracking-wide">Miembro desde</dt>
+            <dd class="font-medium text-slate-800 mt-1">@Model.FechaRegistro.ToString("dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("es"))</dd>
+        </div>
+    </dl>
+
+    <div class="mt-6 flex gap-2 flex-wrap items-center">
+        <a href="@Url.Action("Edit")" class="inline-flex items-center gap-1 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium">
+            <i class="icon-pencil"></i> Editar perfil
+        </a>
+        @using (Html.BeginForm("Logout", "Account", FormMethod.Post, new { @class = "inline" }))
+        {
+            @Html.AntiForgeryToken()
+            <button type="submit" class="inline-flex items-center gap-1 px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium">
+                <i class="icon-log-out"></i> Cerrar sesión
+            </button>
+        }
+    </div>
 </div>

@@ -7,27 +7,26 @@ using gestor_financiero.Models;
 
 namespace gestor_financiero.Controllers
 {
-    public class PresupuestoController : Controller
+    public class PresupuestoController : BaseAuthController
     {
         private readonly FinanzasContext db = new FinanzasContext();
 
-        // GET: Presupuesto
+        // GET: Presupuesto -- solo los del usuario actual
         public async Task<ActionResult> Index()
         {
             var presupuestos = db.Presupuestos
-                .Include(p => p.Usuario)
+                .Where(p => p.IdUsuario == CurrentUserId)
                 .OrderByDescending(p => p.Anio).ThenByDescending(p => p.Mes);
             return View(await presupuestos.ToListAsync());
         }
 
-        // GET: Presupuesto/Details/5
+        // GET: Presupuesto/Details/5 -- valida que sea del usuario actual
         public async Task<ActionResult> Details(int? id)
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             var presupuesto = await db.Presupuestos
-                .Include(p => p.Usuario)
                 .Include(p => p.Detalles.Select(d => d.Categoria))
-                .FirstOrDefaultAsync(p => p.IdPresupuesto == id);
+                .FirstOrDefaultAsync(p => p.IdPresupuesto == id && p.IdUsuario == CurrentUserId);
             if (presupuesto == null) return HttpNotFound();
             return View(presupuesto);
         }
@@ -35,21 +34,22 @@ namespace gestor_financiero.Controllers
         // GET: Presupuesto/Create
         public ActionResult Create()
         {
-            ViewBag.IdUsuario = new SelectList(db.Usuarios, "IdUsuario", "Nombre");
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create([Bind(Include = "IdUsuario,Anio,Mes")] Presupuesto presupuesto)
+        public async Task<ActionResult> Create([Bind(Include = "Anio,Mes")] Presupuesto presupuesto)
         {
-            // No permitir presupuestos duplicados para el mismo usuario/año/mes
+            // El IdUsuario lo asigna el servidor, NO se acepta del form (evita tampering)
+            presupuesto.IdUsuario = CurrentUserId;
+
             bool existe = await db.Presupuestos.AnyAsync(p =>
                 p.IdUsuario == presupuesto.IdUsuario &&
                 p.Anio == presupuesto.Anio &&
                 p.Mes == presupuesto.Mes);
             if (existe)
-                ModelState.AddModelError("", "Ya existe un presupuesto para ese usuario en ese mes/año.");
+                ModelState.AddModelError("", "Ya tenés un presupuesto para ese mes/año.");
 
             if (ModelState.IsValid)
             {
@@ -57,7 +57,6 @@ namespace gestor_financiero.Controllers
                 await db.SaveChangesAsync();
                 return RedirectToAction("Index");
             }
-            ViewBag.IdUsuario = new SelectList(db.Usuarios, "IdUsuario", "Nombre", presupuesto.IdUsuario);
             return View(presupuesto);
         }
 
@@ -65,23 +64,28 @@ namespace gestor_financiero.Controllers
         public async Task<ActionResult> Edit(int? id)
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            var presupuesto = await db.Presupuestos.FindAsync(id);
+            var presupuesto = await db.Presupuestos
+                .FirstOrDefaultAsync(p => p.IdPresupuesto == id && p.IdUsuario == CurrentUserId);
             if (presupuesto == null) return HttpNotFound();
-            ViewBag.IdUsuario = new SelectList(db.Usuarios, "IdUsuario", "Nombre", presupuesto.IdUsuario);
             return View(presupuesto);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit([Bind(Include = "IdPresupuesto,IdUsuario,Anio,Mes")] Presupuesto presupuesto)
+        public async Task<ActionResult> Edit([Bind(Include = "IdPresupuesto,Anio,Mes")] Presupuesto presupuesto)
         {
+            // Verificar primero que el registro pertenece al usuario actual
+            var enBd = await db.Presupuestos
+                .FirstOrDefaultAsync(p => p.IdPresupuesto == presupuesto.IdPresupuesto && p.IdUsuario == CurrentUserId);
+            if (enBd == null) return HttpNotFound();
+
             if (ModelState.IsValid)
             {
-                db.Entry(presupuesto).State = EntityState.Modified;
+                enBd.Anio = presupuesto.Anio;
+                enBd.Mes = presupuesto.Mes;
                 await db.SaveChangesAsync();
                 return RedirectToAction("Index");
             }
-            ViewBag.IdUsuario = new SelectList(db.Usuarios, "IdUsuario", "Nombre", presupuesto.IdUsuario);
             return View(presupuesto);
         }
 
@@ -89,8 +93,8 @@ namespace gestor_financiero.Controllers
         public async Task<ActionResult> Delete(int? id)
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            var presupuesto = await db.Presupuestos.Include(p => p.Usuario)
-                .FirstOrDefaultAsync(p => p.IdPresupuesto == id);
+            var presupuesto = await db.Presupuestos
+                .FirstOrDefaultAsync(p => p.IdPresupuesto == id && p.IdUsuario == CurrentUserId);
             if (presupuesto == null) return HttpNotFound();
             return View(presupuesto);
         }
@@ -99,7 +103,9 @@ namespace gestor_financiero.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> DeleteConfirmed(int id)
         {
-            var presupuesto = await db.Presupuestos.FindAsync(id);
+            var presupuesto = await db.Presupuestos
+                .FirstOrDefaultAsync(p => p.IdPresupuesto == id && p.IdUsuario == CurrentUserId);
+            if (presupuesto == null) return HttpNotFound();
             db.Presupuestos.Remove(presupuesto);
             await db.SaveChangesAsync();
             return RedirectToAction("Index");

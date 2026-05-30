@@ -1,89 +1,62 @@
 using System.Data.Entity;
-using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using System.Web.Mvc;
 using gestor_financiero.Models;
 
 namespace gestor_financiero.Controllers
 {
-    public class UsuarioController : Controller
+    /// <summary>
+    /// Controlador de "Mi perfil". NO administra todos los usuarios.
+    /// El usuario solo puede ver y editar sus propios datos.
+    /// Para borrar la cuenta o cambiar contraseña: AccountController.
+    /// </summary>
+    public class UsuarioController : BaseAuthController
     {
         private readonly FinanzasContext db = new FinanzasContext();
 
-        // GET: Usuario
+        // GET: Usuario  -> Mi perfil
         public async Task<ActionResult> Index()
         {
-            return View(await db.Usuarios.ToListAsync());
+            var miUsuario = await db.Usuarios.FindAsync(CurrentUserId);
+            if (miUsuario == null) return HttpNotFound();
+            return View(miUsuario);
         }
 
-        // GET: Usuario/Details/5
-        public async Task<ActionResult> Details(int? id)
+        // GET: Usuario/Details/<id ignorado>
+        // Siempre muestra el del usuario actual, sin importar el id que pase la URL
+        public async Task<ActionResult> Details()
         {
-            if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            var usuario = await db.Usuarios.FindAsync(id);
-            if (usuario == null) return HttpNotFound();
-            return View(usuario);
+            var miUsuario = await db.Usuarios.FindAsync(CurrentUserId);
+            if (miUsuario == null) return HttpNotFound();
+            return View(miUsuario);
         }
 
-        // GET: Usuario/Create
-        public ActionResult Create() => View();
+        // GET: Usuario/Edit -> editar mi perfil
+        public async Task<ActionResult> Edit()
+        {
+            var miUsuario = await db.Usuarios.FindAsync(CurrentUserId);
+            if (miUsuario == null) return HttpNotFound();
+            return View(miUsuario);
+        }
 
-        // POST: Usuario/Create
+        // POST: Usuario/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create([Bind(Include = "Nombre")] Usuario usuario)
+        public async Task<ActionResult> Edit([Bind(Include = "Nombre,Email")] Usuario form)
         {
+            // Cargamos SIEMPRE el del usuario actual, ignoramos cualquier IdUsuario
+            // que venga en el form (anti-tampering).
+            var miUsuario = await db.Usuarios.FindAsync(CurrentUserId);
+            if (miUsuario == null) return HttpNotFound();
+
             if (ModelState.IsValid)
             {
-                db.Usuarios.Add(usuario);
+                miUsuario.Nombre = form.Nombre;
+                miUsuario.Email = form.Email;
                 await db.SaveChangesAsync();
                 return RedirectToAction("Index");
             }
-            return View(usuario);
-        }
-
-        // GET: Usuario/Edit/5
-        public async Task<ActionResult> Edit(int? id)
-        {
-            if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            var usuario = await db.Usuarios.FindAsync(id);
-            if (usuario == null) return HttpNotFound();
-            return View(usuario);
-        }
-
-        // POST: Usuario/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit([Bind(Include = "IdUsuario,Nombre")] Usuario usuario)
-        {
-            if (ModelState.IsValid)
-            {
-                db.Entry(usuario).State = EntityState.Modified;
-                await db.SaveChangesAsync();
-                return RedirectToAction("Index");
-            }
-            return View(usuario);
-        }
-
-        // GET: Usuario/Delete/5
-        public async Task<ActionResult> Delete(int? id)
-        {
-            if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            var usuario = await db.Usuarios.FindAsync(id);
-            if (usuario == null) return HttpNotFound();
-            return View(usuario);
-        }
-
-        // POST: Usuario/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<ActionResult> DeleteConfirmed(int id)
-        {
-            var usuario = await db.Usuarios.FindAsync(id);
-            db.Usuarios.Remove(usuario);
-            await db.SaveChangesAsync();
-            return RedirectToAction("Index");
+            return View(miUsuario);
         }
 
         protected override void Dispose(bool disposing)

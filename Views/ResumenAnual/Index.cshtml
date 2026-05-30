@@ -27,7 +27,6 @@
         <thead class="bg-slate-50 text-slate-600 text-xs uppercase tracking-wide">
             <tr>
                 <th class="text-left px-6 py-3 font-medium">Año</th>
-                <th class="text-left px-6 py-3 font-medium">Usuario</th>
                 <th class="text-right px-6 py-3 font-medium">Ingresos</th>
                 <th class="text-right px-6 py-3 font-medium">Ahorros</th>
                 <th class="text-right px-6 py-3 font-medium">Gastos fijos</th>
@@ -43,7 +42,6 @@
                 var balance = (r.Ingresos ?? 0) - (r.GastosFijos ?? 0) - (r.GastosVariables ?? 0) - (r.Deudas ?? 0);
                 <tr class="hover:bg-slate-50">
                     <td class="px-6 py-3 font-semibold">@r.Anio</td>
-                    <td class="px-6 py-3">@(r.Usuario != null ? r.Usuario.Nombre : "")</td>
                     <td class="px-6 py-3 text-right text-emerald-600">@money(r.Ingresos ?? 0)</td>
                     <td class="px-6 py-3 text-right text-sky-600">@money(r.Ahorros ?? 0)</td>
                     <td class="px-6 py-3 text-right">@money(r.GastosFijos ?? 0)</td>

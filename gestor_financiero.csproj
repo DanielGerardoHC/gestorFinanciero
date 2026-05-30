@@ -154,6 +154,7 @@
     <Content Include="Views\Presupuesto\Edit.cshtml" />
     <Content Include="Views\Presupuesto\Delete.cshtml" />
     <Content Include="Views\Presupuesto\Details.cshtml" />
+    <Content Include="Views\PresupuestoDetalle\Index.cshtml" />
     <Content Include="Views\PresupuestoDetalle\Create.cshtml" />
     <Content Include="Views\PresupuestoDetalle\Edit.cshtml" />
     <Content Include="Views\PresupuestoDetalle\Delete.cshtml" />
@@ -167,6 +168,7 @@
     <Content Include="Views\Deuda\Edit.cshtml" />
     <Content Include="Views\Deuda\Delete.cshtml" />
     <Content Include="Views\Deuda\Details.cshtml" />
+    <Content Include="Views\PagoDeuda\Index.cshtml" />
     <Content Include="Views\PagoDeuda\Create.cshtml" />
     <Content Include="Views\PagoDeuda\Edit.cshtml" />
     <Content Include="Views\PagoDeuda\Delete.cshtml" />

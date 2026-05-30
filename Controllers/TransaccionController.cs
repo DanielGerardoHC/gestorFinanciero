@@ -8,23 +8,20 @@ using gestor_financiero.Models;
 
 namespace gestor_financiero.Controllers
 {
-    public class TransaccionController : Controller
+    public class TransaccionController : BaseAuthController
     {
         private readonly FinanzasContext db = new FinanzasContext();
 
-        // GET: Transaccion
-        public async Task<ActionResult> Index(int? idUsuario, DateTime? desde, DateTime? hasta)
+        // GET: Transaccion -- solo transacciones del usuario actual
+        public async Task<ActionResult> Index(DateTime? desde, DateTime? hasta)
         {
             var query = db.Transacciones
                 .Include(t => t.Categoria)
-                .Include(t => t.Usuario)
-                .AsQueryable();
+                .Where(t => t.IdUsuario == CurrentUserId);
 
-            if (idUsuario.HasValue) query = query.Where(t => t.IdUsuario == idUsuario.Value);
-            if (desde.HasValue)     query = query.Where(t => t.Fecha >= desde.Value);
-            if (hasta.HasValue)     query = query.Where(t => t.Fecha <= hasta.Value);
+            if (desde.HasValue) query = query.Where(t => t.Fecha >= desde.Value);
+            if (hasta.HasValue) query = query.Where(t => t.Fecha <= hasta.Value);
 
-            ViewBag.IdUsuario = new SelectList(db.Usuarios, "IdUsuario", "Nombre", idUsuario);
             ViewBag.Desde = desde?.ToString("yyyy-MM-dd");
             ViewBag.Hasta = hasta?.ToString("yyyy-MM-dd");
 
@@ -37,8 +34,7 @@ namespace gestor_financiero.Controllers
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             var transaccion = await db.Transacciones
                 .Include(t => t.Categoria)
-                .Include(t => t.Usuario)
-                .FirstOrDefaultAsync(t => t.IdTransaccion == id);
+                .FirstOrDefaultAsync(t => t.IdTransaccion == id && t.IdUsuario == CurrentUserId);
             if (transaccion == null) return HttpNotFound();
             return View(transaccion);
         }
@@ -46,15 +42,17 @@ namespace gestor_financiero.Controllers
         // GET: Transaccion/Create
         public ActionResult Create()
         {
-            ViewBag.IdUsuario = new SelectList(db.Usuarios, "IdUsuario", "Nombre");
             ViewBag.IdCategoria = new SelectList(db.Categorias, "IdCategoria", "Nombre");
             return View(new Transaccion { Fecha = DateTime.Today });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Create([Bind(Include = "IdUsuario,IdCategoria,Monto,Fecha,Notas")] Transaccion transaccion)
+        public async Task<ActionResult> Create([Bind(Include = "IdCategoria,Monto,Fecha,Notas")] Transaccion transaccion)
         {
+            // IdUsuario lo asigna el servidor
+            transaccion.IdUsuario = CurrentUserId;
+
             if (transaccion.Monto <= 0)
                 ModelState.AddModelError("Monto", "El monto debe ser mayor que cero.");
 
@@ -64,7 +62,6 @@ namespace gestor_financiero.Controllers
                 await db.SaveChangesAsync();
                 return RedirectToAction("Index");
             }
-            ViewBag.IdUsuario = new SelectList(db.Usuarios, "IdUsuario", "Nombre", transaccion.IdUsuario);
             ViewBag.IdCategoria = new SelectList(db.Categorias, "IdCategoria", "Nombre", transaccion.IdCategoria);
             return View(transaccion);
         }
@@ -73,24 +70,30 @@ namespace gestor_financiero.Controllers
         public async Task<ActionResult> Edit(int? id)
         {
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
-            var transaccion = await db.Transacciones.FindAsync(id);
+            var transaccion = await db.Transacciones
+                .FirstOrDefaultAsync(t => t.IdTransaccion == id && t.IdUsuario == CurrentUserId);
             if (transaccion == null) return HttpNotFound();
-            ViewBag.IdUsuario = new SelectList(db.Usuarios, "IdUsuario", "Nombre", transaccion.IdUsuario);
             ViewBag.IdCategoria = new SelectList(db.Categorias, "IdCategoria", "Nombre", transaccion.IdCategoria);
             return View(transaccion);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<ActionResult> Edit([Bind(Include = "IdTransaccion,IdUsuario,IdCategoria,Monto,Fecha,Notas")] Transaccion transaccion)
+        public async Task<ActionResult> Edit([Bind(Include = "IdTransaccion,IdCategoria,Monto,Fecha,Notas")] Transaccion transaccion)
         {
+            var enBd = await db.Transacciones
+                .FirstOrDefaultAsync(t => t.IdTransaccion == transaccion.IdTransaccion && t.IdUsuario == CurrentUserId);
+            if (enBd == null) return HttpNotFound();
+
             if (ModelState.IsValid)
             {
-                db.Entry(transaccion).State = EntityState.Modified;
+                enBd.IdCategoria = transaccion.IdCategoria;
+                enBd.Monto = transaccion.Monto;
+                enBd.Fecha = transaccion.Fecha;
+                enBd.Notas = transaccion.Notas;
                 await db.SaveChangesAsync();
                 return RedirectToAction("Index");
             }
-            ViewBag.IdUsuario = new SelectList(db.Usuarios, "IdUsuario", "Nombre", transaccion.IdUsuario);
             ViewBag.IdCategoria = new SelectList(db.Categorias, "IdCategoria", "Nombre", transaccion.IdCategoria);
             return View(transaccion);
         }
@@ -101,8 +104,7 @@ namespace gestor_financiero.Controllers
             if (id == null) return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             var transaccion = await db.Transacciones
                 .Include(t => t.Categoria)
-                .Include(t => t.Usuario)
-                .FirstOrDefaultAsync(t => t.IdTransaccion == id);
+                .FirstOrDefaultAsync(t => t.IdTransaccion == id && t.IdUsuario == CurrentUserId);
             if (transaccion == null) return HttpNotFound();
             return View(transaccion);
         }
@@ -111,7 +113,9 @@ namespace gestor_financiero.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> DeleteConfirmed(int id)
         {
-            var transaccion = await db.Transacciones.FindAsync(id);
+            var transaccion = await db.Transacciones
+                .FirstOrDefaultAsync(t => t.IdTransaccion == id && t.IdUsuario == CurrentUserId);
+            if (transaccion == null) return HttpNotFound();
             db.Transacciones.Remove(transaccion);
             await db.SaveChangesAsync();
             return RedirectToAction("Index");
