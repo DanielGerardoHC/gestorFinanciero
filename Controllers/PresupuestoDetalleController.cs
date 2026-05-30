@@ -48,7 +48,7 @@ namespace gestor_financiero.Controllers
                 .ToListAsync();
 
             ViewBag.IdPresupuesto = new SelectList(presupuestosUsuario, "IdPresupuesto", "IdPresupuesto", idPresupuesto);
-            ViewBag.IdCategoria = new SelectList(db.Categorias, "IdCategoria", "Nombre");
+            ViewBag.IdCategoria = await CategoriaHelper.ConstruirSelectAgrupado(db);
             return View(new PresupuestoDetalle { IdPresupuesto = idPresupuesto ?? 0 });
         }
 
@@ -66,13 +66,14 @@ namespace gestor_financiero.Controllers
             {
                 db.PresupuestoDetalles.Add(detalle);
                 await db.SaveChangesAsync();
+                TempData["Success"] = "Detalle agregado al presupuesto.";
                 return RedirectToAction("Index", new { idPresupuesto = detalle.IdPresupuesto });
             }
 
             var presupuestosUsuario = await db.Presupuestos
                 .Where(p => p.IdUsuario == CurrentUserId).ToListAsync();
             ViewBag.IdPresupuesto = new SelectList(presupuestosUsuario, "IdPresupuesto", "IdPresupuesto", detalle.IdPresupuesto);
-            ViewBag.IdCategoria = new SelectList(db.Categorias, "IdCategoria", "Nombre", detalle.IdCategoria);
+            ViewBag.IdCategoria = await CategoriaHelper.ConstruirSelectAgrupado(db, detalle.IdCategoria);
             return View(detalle);
         }
 
@@ -88,7 +89,7 @@ namespace gestor_financiero.Controllers
             var presupuestosUsuario = await db.Presupuestos
                 .Where(p => p.IdUsuario == CurrentUserId).ToListAsync();
             ViewBag.IdPresupuesto = new SelectList(presupuestosUsuario, "IdPresupuesto", "IdPresupuesto", detalle.IdPresupuesto);
-            ViewBag.IdCategoria = new SelectList(db.Categorias, "IdCategoria", "Nombre", detalle.IdCategoria);
+            ViewBag.IdCategoria = await CategoriaHelper.ConstruirSelectAgrupado(db, detalle.IdCategoria);
             return View(detalle);
         }
 
@@ -115,13 +116,14 @@ namespace gestor_financiero.Controllers
                 enBd.Estimado = detalle.Estimado;
                 enBd.Real = detalle.Real;
                 await db.SaveChangesAsync();
+                TempData["Success"] = "Detalle actualizado.";
                 return RedirectToAction("Index", new { idPresupuesto = detalle.IdPresupuesto });
             }
 
             var presupuestosUsuario = await db.Presupuestos
                 .Where(p => p.IdUsuario == CurrentUserId).ToListAsync();
             ViewBag.IdPresupuesto = new SelectList(presupuestosUsuario, "IdPresupuesto", "IdPresupuesto", detalle.IdPresupuesto);
-            ViewBag.IdCategoria = new SelectList(db.Categorias, "IdCategoria", "Nombre", detalle.IdCategoria);
+            ViewBag.IdCategoria = await CategoriaHelper.ConstruirSelectAgrupado(db, detalle.IdCategoria);
             return View(detalle);
         }
 
@@ -149,6 +151,7 @@ namespace gestor_financiero.Controllers
             int idPresupuesto = detalle.IdPresupuesto;
             db.PresupuestoDetalles.Remove(detalle);
             await db.SaveChangesAsync();
+            TempData["Success"] = "Detalle eliminado.";
             return RedirectToAction("Index", new { idPresupuesto });
         }
 

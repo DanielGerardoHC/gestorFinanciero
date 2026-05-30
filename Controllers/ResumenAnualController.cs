@@ -51,6 +51,7 @@ namespace gestor_financiero.Controllers
             {
                 db.ResumenesAnuales.Add(resumen);
                 await db.SaveChangesAsync();
+                TempData["Success"] = "Resumen anual creado.";
                 return RedirectToAction("Index");
             }
             return View(resumen);
@@ -83,6 +84,7 @@ namespace gestor_financiero.Controllers
                 enBd.GastosVariables = resumen.GastosVariables;
                 enBd.Deudas = resumen.Deudas;
                 await db.SaveChangesAsync();
+                TempData["Success"] = "Resumen anual actualizado.";
                 return RedirectToAction("Index");
             }
             return View(resumen);
@@ -107,6 +109,7 @@ namespace gestor_financiero.Controllers
             if (resumen == null) return HttpNotFound();
             db.ResumenesAnuales.Remove(resumen);
             await db.SaveChangesAsync();
+            TempData["Success"] = "Resumen anual eliminado.";
             return RedirectToAction("Index");
         }
 

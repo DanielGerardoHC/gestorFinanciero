@@ -50,6 +50,7 @@ namespace gestor_financiero.Controllers
             {
                 db.Deudas.Add(deuda);
                 await db.SaveChangesAsync();
+                TempData["Success"] = "Deuda registrada.";
                 return RedirectToAction("Index");
             }
             return View(deuda);
@@ -81,6 +82,7 @@ namespace gestor_financiero.Controllers
                 enBd.PagoMinimo = deuda.PagoMinimo;
                 enBd.Notas = deuda.Notas;
                 await db.SaveChangesAsync();
+                TempData["Success"] = "Deuda actualizada.";
                 return RedirectToAction("Index");
             }
             return View(deuda);
@@ -105,6 +107,7 @@ namespace gestor_financiero.Controllers
             if (deuda == null) return HttpNotFound();
             db.Deudas.Remove(deuda);
             await db.SaveChangesAsync();
+            TempData["Success"] = "Deuda eliminada.";
             return RedirectToAction("Index");
         }
 

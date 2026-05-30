@@ -30,6 +30,7 @@ namespace gestor_financiero.Models
         public DbSet<Deuda> Deudas { get; set; }
         public DbSet<PagoDeuda> PagosDeuda { get; set; }
         public DbSet<ResumenAnual> ResumenesAnuales { get; set; }
+        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {

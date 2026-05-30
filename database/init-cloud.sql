@@ -25,8 +25,12 @@ CREATE TABLE Usuario (
     email VARCHAR(150) NOT NULL,
     password_hash VARCHAR(500) NOT NULL,
     fecha_registro DATETIME NOT NULL DEFAULT GETDATE(),
+    activo BIT NOT NULL DEFAULT 1,
     CONSTRAINT UQ_Usuario_Email UNIQUE (email)
 );
+-- Agregar columna activo si la tabla ya existia sin ella
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE Name = 'activo' AND Object_ID = Object_ID('Usuario'))
+    ALTER TABLE Usuario ADD activo BIT NOT NULL DEFAULT 1;
 
 -- 2. CATEGORIAS
 IF OBJECT_ID('dbo.Categoria', 'U') IS NULL
@@ -112,6 +116,30 @@ CREATE TABLE ResumenAnual (
     deudas DECIMAL(12,2),
     CONSTRAINT FK_ResumenAnual_Usuario FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario)
 );
+
+-- 9. CODIGOS OTP (recuperacion de contrasena + activacion de cuenta)
+IF OBJECT_ID('dbo.PasswordResetToken', 'U') IS NULL
+CREATE TABLE PasswordResetToken (
+    id_token INT IDENTITY(1,1) PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    token VARCHAR(64) NOT NULL,
+    proposito VARCHAR(20) NOT NULL DEFAULT 'RESET_PASSWORD',
+    expiracion DATETIME NOT NULL,
+    usado BIT NOT NULL DEFAULT 0,
+    creado_en DATETIME NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT FK_PwdResetToken_Usuario FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario)
+);
+-- Si la tabla ya existia sin la columna proposito, agregarla
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE Name = 'proposito' AND Object_ID = Object_ID('PasswordResetToken'))
+    ALTER TABLE PasswordResetToken ADD proposito VARCHAR(20) NOT NULL DEFAULT 'RESET_PASSWORD';
+-- Si existia el UNIQUE en token (cuando era GUID), lo eliminamos porque ahora
+-- el "token" es un OTP de 6 digitos que se reusa entre distintos usuarios.
+IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UQ_PwdResetToken')
+    ALTER TABLE PasswordResetToken DROP CONSTRAINT UQ_PwdResetToken;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_PwdResetToken_Usuario')
+    CREATE INDEX IX_PwdResetToken_Usuario ON PasswordResetToken(id_usuario);
 GO
 
 -- Indices de rendimiento

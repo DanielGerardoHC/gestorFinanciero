@@ -34,6 +34,12 @@ namespace gestor_financiero.Models
         [Display(Name = "Registrado el")]
         public DateTime FechaRegistro { get; set; }
 
+        // Activo = true cuando el usuario completo el flujo de verificacion
+        // por OTP. Si Activo = false, NO puede loguearse hasta validar su
+        // codigo en /Account/VerifyOtp.
+        [Column("activo")]
+        public bool Activo { get; set; }
+
         // Navegación
         public virtual ICollection<Presupuesto> Presupuestos { get; set; }
         public virtual ICollection<Transaccion> Transacciones { get; set; }

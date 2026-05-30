@@ -39,12 +39,26 @@ namespace gestor_financiero.Controllers
         // GET: PagoDeuda/Create
         public async Task<ActionResult> Create(int? idDeuda)
         {
-            // Solo deudas del usuario actual en el dropdown
+            // Pasamos la lista completa (no SelectList) para que la vista pueda
+            // poner data-saldo, data-tasa, data-min en cada <option> y el JS
+            // pueda autocalcular interés / capital / saldo restante.
             var deudasUsuario = await db.Deudas
                 .Where(d => d.IdUsuario == CurrentUserId)
+                .OrderBy(d => d.Nombre)
                 .ToListAsync();
-            ViewBag.IdDeuda = new SelectList(deudasUsuario, "IdDeuda", "Nombre", idDeuda);
-            return View(new PagoDeuda { Fecha = DateTime.Today, IdDeuda = idDeuda ?? 0 });
+            ViewBag.DeudasUsuario = deudasUsuario;
+
+            var deudaPreseleccionada = idDeuda.HasValue
+                ? deudasUsuario.FirstOrDefault(d => d.IdDeuda == idDeuda.Value)
+                : null;
+
+            return View(new PagoDeuda
+            {
+                Fecha = DateTime.Today,
+                IdDeuda = idDeuda ?? 0,
+                // Pre-llenar el pago minimo con el de la deuda si viene una seleccionada
+                PagoMinimo = deudaPreseleccionada?.PagoMinimo ?? 0
+            });
         }
 
         [HttpPost]
@@ -69,6 +83,7 @@ namespace gestor_financiero.Controllers
                 db.Entry(deuda).State = EntityState.Modified;
 
                 await db.SaveChangesAsync();
+                TempData["Success"] = "Pago registrado.";
                 return RedirectToAction("Index", new { idDeuda = pago.IdDeuda });
             }
 
@@ -116,6 +131,7 @@ namespace gestor_financiero.Controllers
                 enBd.Capital = pago.Capital;
                 enBd.SaldoRestante = pago.SaldoRestante;
                 await db.SaveChangesAsync();
+                TempData["Success"] = "Pago actualizado.";
                 return RedirectToAction("Index", new { idDeuda = pago.IdDeuda });
             }
 
@@ -147,6 +163,7 @@ namespace gestor_financiero.Controllers
             int idDeuda = pago.IdDeuda;
             db.PagosDeuda.Remove(pago);
             await db.SaveChangesAsync();
+            TempData["Success"] = "Pago eliminado.";
             return RedirectToAction("Index", new { idDeuda });
         }
 

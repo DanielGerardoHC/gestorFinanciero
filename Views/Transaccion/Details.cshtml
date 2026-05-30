@@ -2,7 +2,7 @@
 @using System.Globalization
 @{ ViewBag.Title = "Detalle de transacción"; }
 
-<div class="max-w-xl bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+<div class="max-w-xl mx-auto bg-white rounded-xl shadow-sm border border-slate-100 p-6">
     <dl class="grid grid-cols-2 gap-3 text-sm mb-6">
         <dt class="text-slate-500">Fecha</dt><dd class="font-medium">@Model.Fecha.ToString("dd MMM yyyy", new CultureInfo("es"))</dd>
         <dt class="text-slate-500">Categoría</dt><dd class="font-medium">@(Model.Categoria != null ? Model.Categoria.Nombre : "") (@(Model.Categoria != null ? Model.Categoria.Tipo : ""))</dd>

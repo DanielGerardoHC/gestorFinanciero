@@ -40,9 +40,9 @@ namespace gestor_financiero.Controllers
         }
 
         // GET: Transaccion/Create
-        public ActionResult Create()
+        public async Task<ActionResult> Create()
         {
-            ViewBag.IdCategoria = new SelectList(db.Categorias, "IdCategoria", "Nombre");
+            ViewBag.IdCategoria = await CategoriaHelper.ConstruirSelectAgrupado(db);
             return View(new Transaccion { Fecha = DateTime.Today });
         }
 
@@ -60,9 +60,10 @@ namespace gestor_financiero.Controllers
             {
                 db.Transacciones.Add(transaccion);
                 await db.SaveChangesAsync();
+                TempData["Success"] = "Transacción registrada.";
                 return RedirectToAction("Index");
             }
-            ViewBag.IdCategoria = new SelectList(db.Categorias, "IdCategoria", "Nombre", transaccion.IdCategoria);
+            ViewBag.IdCategoria = await CategoriaHelper.ConstruirSelectAgrupado(db, transaccion.IdCategoria);
             return View(transaccion);
         }
 
@@ -73,7 +74,7 @@ namespace gestor_financiero.Controllers
             var transaccion = await db.Transacciones
                 .FirstOrDefaultAsync(t => t.IdTransaccion == id && t.IdUsuario == CurrentUserId);
             if (transaccion == null) return HttpNotFound();
-            ViewBag.IdCategoria = new SelectList(db.Categorias, "IdCategoria", "Nombre", transaccion.IdCategoria);
+            ViewBag.IdCategoria = await CategoriaHelper.ConstruirSelectAgrupado(db, transaccion.IdCategoria);
             return View(transaccion);
         }
 
@@ -92,9 +93,10 @@ namespace gestor_financiero.Controllers
                 enBd.Fecha = transaccion.Fecha;
                 enBd.Notas = transaccion.Notas;
                 await db.SaveChangesAsync();
+                TempData["Success"] = "Transacción actualizada.";
                 return RedirectToAction("Index");
             }
-            ViewBag.IdCategoria = new SelectList(db.Categorias, "IdCategoria", "Nombre", transaccion.IdCategoria);
+            ViewBag.IdCategoria = await CategoriaHelper.ConstruirSelectAgrupado(db, transaccion.IdCategoria);
             return View(transaccion);
         }
 
@@ -118,6 +120,7 @@ namespace gestor_financiero.Controllers
             if (transaccion == null) return HttpNotFound();
             db.Transacciones.Remove(transaccion);
             await db.SaveChangesAsync();
+            TempData["Success"] = "Transacción eliminada.";
             return RedirectToAction("Index");
         }
 

@@ -5,11 +5,16 @@
     Func<decimal, string> money = v => v.ToString("C2", new CultureInfo("es-SV"));
 }
 
-<div class="flex justify-end mb-4">
+<div class="no-print flex justify-end gap-2 mb-4">
+    <button type="button" id="btnPdf" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium inline-flex items-center gap-1">
+        <i class="icon-download"></i> Descargar PDF
+    </button>
     <a href="@Url.Action("Create")" class="inline-flex items-center gap-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">
         <i class="icon-plus"></i> Nuevo resumen
     </a>
 </div>
+
+<div id="reporte-pdf">
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
     <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
@@ -58,6 +63,8 @@
     </table>
 </div>
 
+</div> @* fin de #reporte-pdf *@
+
 @section Scripts {
 <script src="~/Scripts/chart.umd.min.js"></script>
 <script>
@@ -104,5 +111,39 @@
             options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
         });
     }
+</script>
+
+<script src="~/Scripts/html2pdf.min.js"></script>
+<script>
+    document.getElementById('btnPdf').addEventListener('click', function () {
+        var el = document.getElementById('reporte-pdf');
+        var fecha = new Date().toISOString().slice(0, 10);
+        var nombre = 'ResumenAnual_' + fecha + '.pdf';
+
+        if (window.Swal) {
+            Swal.fire({
+                title: 'Generando PDF…',
+                allowOutsideClick: false,
+                didOpen: function () { Swal.showLoading(); }
+            });
+        }
+
+        // Esperar a que Chart.js termine de animar antes de capturar
+        setTimeout(function () {
+            html2pdf().set({
+                margin:      [10, 10, 10, 10],
+                filename:    nombre,
+                image:       { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+                jsPDF:       { unit: 'mm', format: 'a4', orientation: 'landscape' },
+                pagebreak:   { mode: ['avoid-all', 'css', 'legacy'] }
+            }).from(el).save().then(function () {
+                if (window.Swal) Swal.close();
+            }).catch(function (err) {
+                if (window.Swal) { Swal.close(); Swal.fire('Error', 'No se pudo generar el PDF', 'error'); }
+                console.error(err);
+            });
+        }, 200);
+    });
 </script>
 }

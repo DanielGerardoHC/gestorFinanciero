@@ -8,6 +8,14 @@
     var totalCapital = Model.Pagos?.Sum(x => x.Capital) ?? 0;
 }
 
+<div class="no-print flex justify-end gap-2 mb-4">
+    <button type="button" id="btnPdf" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium inline-flex items-center gap-1">
+        <i class="icon-download"></i> Descargar PDF
+    </button>
+</div>
+
+<div id="reporte-pdf">
+
 <div class="bg-gradient-to-r from-rose-600 to-rose-800 text-white rounded-xl p-6 mb-6 shadow-lg">
     <div class="flex items-center justify-between flex-wrap gap-4">
         <div>
@@ -82,4 +90,39 @@
     </table>
 </div>
 
-<div class="mt-6"><a href="@Url.Action("Index")" class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium inline-block">← Volver</a></div>
+</div> @* fin de #reporte-pdf *@
+
+<div class="no-print mt-6"><a href="@Url.Action("Index")" class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium inline-block">← Volver</a></div>
+
+@section Scripts {
+<script src="~/Scripts/html2pdf.min.js"></script>
+<script>
+    document.getElementById('btnPdf').addEventListener('click', function () {
+        var el = document.getElementById('reporte-pdf');
+        var fecha = new Date().toISOString().slice(0, 10);
+        var nombre = 'Deuda_@(Model.Nombre.Replace(" ", "_"))_' + fecha + '.pdf';
+
+        if (window.Swal) {
+            Swal.fire({
+                title: 'Generando PDF…',
+                allowOutsideClick: false,
+                didOpen: function () { Swal.showLoading(); }
+            });
+        }
+
+        html2pdf().set({
+            margin:      [10, 10, 10, 10],
+            filename:    nombre,
+            image:       { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+            jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak:   { mode: ['avoid-all', 'css', 'legacy'] }
+        }).from(el).save().then(function () {
+            if (window.Swal) Swal.close();
+        }).catch(function (err) {
+            if (window.Swal) { Swal.close(); Swal.fire('Error', 'No se pudo generar el PDF', 'error'); }
+            console.error(err);
+        });
+    });
+</script>
+}

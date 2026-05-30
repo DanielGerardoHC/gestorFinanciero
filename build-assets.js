@@ -25,6 +25,12 @@ console.log('Copiando assets de node_modules a las carpetas del proyecto...\n');
 console.log('Chart.js:');
 copy('node_modules/chart.js/dist/chart.umd.js', 'Scripts/chart.umd.min.js');
 
+console.log('\nSweetAlert2:');
+copy('node_modules/sweetalert2/dist/sweetalert2.all.min.js', 'Scripts/sweetalert2.min.js');
+
+console.log('\nhtml2pdf.js:');
+copy('node_modules/html2pdf.js/dist/html2pdf.bundle.min.js', 'Scripts/html2pdf.min.js');
+
 // Lucide: el CSS hace referencia a "lucide.woff2" (minuscula). Copiamos con ese
 // nombre exacto. El paquete npm los nombra con L mayuscula, asi que renombramos.
 console.log('\nLucide icons:');

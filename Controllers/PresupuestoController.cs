@@ -55,6 +55,7 @@ namespace gestor_financiero.Controllers
             {
                 db.Presupuestos.Add(presupuesto);
                 await db.SaveChangesAsync();
+                TempData["Success"] = "Presupuesto creado correctamente.";
                 return RedirectToAction("Index");
             }
             return View(presupuesto);
@@ -84,6 +85,7 @@ namespace gestor_financiero.Controllers
                 enBd.Anio = presupuesto.Anio;
                 enBd.Mes = presupuesto.Mes;
                 await db.SaveChangesAsync();
+                TempData["Success"] = "Presupuesto actualizado.";
                 return RedirectToAction("Index");
             }
             return View(presupuesto);
@@ -108,6 +110,7 @@ namespace gestor_financiero.Controllers
             if (presupuesto == null) return HttpNotFound();
             db.Presupuestos.Remove(presupuesto);
             await db.SaveChangesAsync();
+            TempData["Success"] = "Presupuesto eliminado.";
             return RedirectToAction("Index");
         }
 

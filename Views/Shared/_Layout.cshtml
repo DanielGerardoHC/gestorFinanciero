@@ -320,5 +320,43 @@ else
     </script>
 
     @RenderSection("Scripts", required: false)
+
+    @* === SweetAlert2 — feedback global a partir de TempData === *@
+    <script src="~/Scripts/sweetalert2.min.js"></script>
+    @{
+        var swalSuccess = TempData["Success"] as string;
+        var swalError = TempData["Error"] as string;
+        var swalInfo = TempData["Info"] as string;
+    }
+    @if (!string.IsNullOrEmpty(swalSuccess) || !string.IsNullOrEmpty(swalError) || !string.IsNullOrEmpty(swalInfo))
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3500,
+                    timerProgressBar: true,
+                    didOpen: function (t) {
+                        t.addEventListener('mouseenter', Swal.stopTimer);
+                        t.addEventListener('mouseleave', Swal.resumeTimer);
+                    }
+                });
+                @if (!string.IsNullOrEmpty(swalSuccess))
+                {
+                    <text>toast.fire({ icon: 'success', title: @Html.Raw(Json.Encode(swalSuccess)) });</text>
+                }
+                @if (!string.IsNullOrEmpty(swalError))
+                {
+                    <text>toast.fire({ icon: 'error', title: @Html.Raw(Json.Encode(swalError)) });</text>
+                }
+                @if (!string.IsNullOrEmpty(swalInfo))
+                {
+                    <text>toast.fire({ icon: 'info', title: @Html.Raw(Json.Encode(swalInfo)) });</text>
+                }
+            });
+        </script>
+    }
 </body>
 </html>

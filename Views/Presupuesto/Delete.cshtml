@@ -1,7 +1,7 @@
 @model gestor_financiero.Models.Presupuesto
 @using System.Globalization
 @{ ViewBag.Title = "Eliminar presupuesto"; }
-<div class="max-w-md bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+<div class="max-w-md mx-auto bg-white rounded-xl shadow-sm border border-slate-100 p-6">
     <div class="flex items-start gap-3 p-4 bg-rose-50 border border-rose-200 rounded-lg mb-4">
         <i class="icon-triangle-alert text-rose-600 text-xl"></i>
         <p class="text-sm text-rose-800">¿Eliminar el presupuesto de <strong>@CultureInfo.GetCultureInfo("es").DateTimeFormat.GetMonthName(Model.Mes) @Model.Anio</strong>? Todos sus detalles también se eliminarán.</p>

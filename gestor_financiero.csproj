@@ -99,7 +99,9 @@
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="App_Start\CategoriaHelper.cs" />
     <Compile Include="App_Start\DataSeeder.cs" />
+    <Compile Include="App_Start\EmailService.cs" />
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Controllers\AccountController.cs" />
@@ -121,6 +123,7 @@
     <Compile Include="Models\Deuda.cs" />
     <Compile Include="Models\FinanzasContext.cs" />
     <Compile Include="Models\PagoDeuda.cs" />
+    <Compile Include="Models\PasswordResetToken.cs" />
     <Compile Include="Models\Presupuesto.cs" />
     <Compile Include="Models\PresupuestoDetalle.cs" />
     <Compile Include="Models\ResumenAnual.cs" />
@@ -139,6 +142,10 @@
     <Content Include="Views\Shared\_FormResumenAnual.cshtml" />
     <Content Include="Views\Account\Login.cshtml" />
     <Content Include="Views\Account\Register.cshtml" />
+    <Content Include="Views\Account\ForgotPassword.cshtml" />
+    <Content Include="Views\Account\ResetPassword.cshtml" />
+    <Content Include="Views\Account\VerifyOtp.cshtml" />
+    <Content Include="Views\Account\ChangePassword.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Usuario\Index.cshtml" />
     <Content Include="Views\Usuario\Create.cshtml" />

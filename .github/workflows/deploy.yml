@@ -51,15 +51,113 @@ jobs:
       # ============================================================
       # SECRETS: inyectar credenciales en Web.Release.config
       # ============================================================
-      - name: Inyectar cadena de conexion
+      - name: Inyectar cadena de conexion y credenciales SMTP
         shell: pwsh
         run: |
           $config = Get-Content Web.Release.config -Raw
-          $config = $config.Replace('__DB_HOST__',     '${{ secrets.DB_HOST }}')
-          $config = $config.Replace('__DB_NAME__',     '${{ secrets.DB_NAME }}')
-          $config = $config.Replace('__DB_USER__',     '${{ secrets.DB_USER }}')
-          $config = $config.Replace('__DB_PASSWORD__', '${{ secrets.DB_PASSWORD }}')
+          # Base de datos
+          $config = $config.Replace('__DB_HOST__',      '${{ secrets.DB_HOST }}')
+          $config = $config.Replace('__DB_NAME__',      '${{ secrets.DB_NAME }}')
+          $config = $config.Replace('__DB_USER__',      '${{ secrets.DB_USER }}')
+          $config = $config.Replace('__DB_PASSWORD__',  '${{ secrets.DB_PASSWORD }}')
+          # SMTP (Gmail) y URL base para emails
+          $config = $config.Replace('__SMTP_USER__',     '${{ secrets.SMTP_USER }}')
+          $config = $config.Replace('__SMTP_PASSWORD__', '${{ secrets.SMTP_PASSWORD }}')
+          $config = $config.Replace('__SMTP_FROM__',    '${{ secrets.SMTP_FROM }}')
+          $config = $config.Replace('__APP_BASE_URL__', '${{ secrets.APP_BASE_URL }}')
           Set-Content Web.Release.config $config -NoNewline
+
+      # ============================================================
+      # MIGRACIONES: ejecuta cada archivo database/migration_*.sql que
+      # NO haya sido aplicado antes contra la BD remota.
+      #
+      # Llevamos un registro en la tabla _AppliedMigrations. Cada vez
+      # que se aplica un script, guardamos su nombre + fecha. En el
+      # proximo deploy se saltea automaticamente lo ya aplicado.
+      #
+      # Las migraciones SIGUEN siendo idempotentes (IF NOT EXISTS) por
+      # robustez, pero ya no se ejecutan dos veces.
+      #
+      # Si algun script falla, abortamos el deploy ANTES de subir los
+      # binarios, asi no nos quedamos con codigo nuevo apuntando a una
+      # BD vieja.
+      # ============================================================
+      - name: Aplicar migraciones SQL a la BD remota
+        shell: pwsh
+        env:
+          DB_SERVER: ${{ secrets.DB_HOST_REMOTE }}
+          DB_USER:   ${{ secrets.DB_USER }}
+          DB_PASS:   ${{ secrets.DB_PASSWORD }}
+          DB_NAME:   ${{ secrets.DB_NAME }}
+        run: |
+          function Invoke-Sql([string]$Sql) {
+            & sqlcmd -S "$env:DB_SERVER" -U "$env:DB_USER" -P "$env:DB_PASS" `
+                     -d "$env:DB_NAME" -C -b -Q $Sql
+            return $LASTEXITCODE
+          }
+          function Invoke-SqlFile([string]$Path) {
+            & sqlcmd -S "$env:DB_SERVER" -U "$env:DB_USER" -P "$env:DB_PASS" `
+                     -d "$env:DB_NAME" -C -b -i $Path
+            return $LASTEXITCODE
+          }
+          function Invoke-SqlScalar([string]$Sql) {
+            $out = & sqlcmd -S "$env:DB_SERVER" -U "$env:DB_USER" -P "$env:DB_PASS" `
+                            -d "$env:DB_NAME" -C -b -h -1 -W -Q $Sql
+            return ($out | Where-Object { $_ -and $_.Trim() -ne '' } | Select-Object -First 1).Trim()
+          }
+
+          # 1. Asegurar que existe la tabla de tracking
+          Write-Host "Asegurando tabla _AppliedMigrations..." -ForegroundColor Cyan
+          $bootstrap = @"
+          IF OBJECT_ID('dbo._AppliedMigrations', 'U') IS NULL
+          CREATE TABLE _AppliedMigrations (
+              nombre VARCHAR(200) NOT NULL PRIMARY KEY,
+              aplicada_en DATETIME NOT NULL DEFAULT GETUTCDATE()
+          );
+          "@
+          if ((Invoke-Sql $bootstrap) -ne 0) {
+            Write-Host "ERROR creando _AppliedMigrations" -ForegroundColor Red
+            exit 1
+          }
+
+          # 2. Iterar todas las migrations en orden alfabetico
+          $migs = Get-ChildItem -Path "database" -Filter "migration_*.sql" | Sort-Object Name
+          if (-not $migs) {
+            Write-Host "No hay archivos migration_*.sql en database/." -ForegroundColor Yellow
+            exit 0
+          }
+          Write-Host "Migraciones detectadas: $($migs.Count)"
+
+          $aplicadas = 0
+          $saltadas = 0
+          foreach ($m in $migs) {
+            $nombre = $m.Name
+            $existe = Invoke-SqlScalar "SET NOCOUNT ON; SELECT COUNT(*) FROM _AppliedMigrations WHERE nombre = '$nombre';"
+            if ($existe -eq '1') {
+              Write-Host "  -- saltada: $nombre (ya aplicada)" -ForegroundColor DarkGray
+              $saltadas++
+              continue
+            }
+
+            Write-Host ""
+            Write-Host "==> Aplicando $nombre" -ForegroundColor Cyan
+            if ((Invoke-SqlFile $m.FullName) -ne 0) {
+              Write-Host "ERROR aplicando $nombre. Abortando deploy." -ForegroundColor Red
+              exit 1
+            }
+
+            # Registrar la migracion como aplicada
+            $rc = Invoke-Sql "INSERT INTO _AppliedMigrations (nombre) VALUES ('$nombre');"
+            if ($rc -ne 0) {
+              Write-Host "ERROR registrando $nombre en _AppliedMigrations" -ForegroundColor Red
+              exit 1
+            }
+            Write-Host "    registrada en _AppliedMigrations" -ForegroundColor Green
+            $aplicadas++
+          }
+
+          Write-Host ""
+          Write-Host "Migraciones aplicadas: $aplicadas | saltadas: $saltadas" -ForegroundColor Green
 
       # ============================================================
       # PUBLISH: MSBuild en Release a la carpeta publish/
@@ -119,6 +217,14 @@ jobs:
           if (Test-Path "Scripts\chart.umd.min.js") {
             Copy-Item "Scripts\chart.umd.min.js" "$publishDir\Scripts\" -Force
             Write-Host "Scripts/chart.umd.min.js copiado"
+          }
+          if (Test-Path "Scripts\sweetalert2.min.js") {
+            Copy-Item "Scripts\sweetalert2.min.js" "$publishDir\Scripts\" -Force
+            Write-Host "Scripts/sweetalert2.min.js copiado"
+          }
+          if (Test-Path "Scripts\html2pdf.min.js") {
+            Copy-Item "Scripts\html2pdf.min.js" "$publishDir\Scripts\" -Force
+            Write-Host "Scripts/html2pdf.min.js copiado"
           }
 
           Write-Host ""

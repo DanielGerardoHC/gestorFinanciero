@@ -27,6 +27,11 @@ CREATE TABLE Usuario (
 -- Si la tabla ya existia sin esas columnas (instalaciones previas), las agregamos
 IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE Name = 'email' AND Object_ID = Object_ID('Usuario'))
     ALTER TABLE Usuario ADD email VARCHAR(150) NULL;
+
+-- Columna activo: si la tabla Usuario ya existia sin ella, se agrega con default 1
+-- para que las cuentas previas sigan funcionando.
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE Name = 'activo' AND Object_ID = Object_ID('Usuario'))
+    ALTER TABLE Usuario ADD activo BIT NOT NULL DEFAULT 1;
 IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE Name = 'password_hash' AND Object_ID = Object_ID('Usuario'))
     ALTER TABLE Usuario ADD password_hash VARCHAR(500) NULL;
 IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE Name = 'fecha_registro' AND Object_ID = Object_ID('Usuario'))
@@ -116,6 +121,27 @@ CREATE TABLE ResumenAnual (
     deudas DECIMAL(12,2),
     CONSTRAINT FK_ResumenAnual_Usuario FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario)
 );
+
+-- 9. CODIGOS OTP (recuperacion de contrasena + activacion de cuenta)
+IF OBJECT_ID('dbo.PasswordResetToken', 'U') IS NULL
+CREATE TABLE PasswordResetToken (
+    id_token INT IDENTITY(1,1) PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    token VARCHAR(64) NOT NULL,
+    proposito VARCHAR(20) NOT NULL DEFAULT 'RESET_PASSWORD',
+    expiracion DATETIME NOT NULL,
+    usado BIT NOT NULL DEFAULT 0,
+    creado_en DATETIME NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT FK_PwdResetToken_Usuario FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario)
+);
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE Name = 'proposito' AND Object_ID = Object_ID('PasswordResetToken'))
+    ALTER TABLE PasswordResetToken ADD proposito VARCHAR(20) NOT NULL DEFAULT 'RESET_PASSWORD';
+IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UQ_PwdResetToken')
+    ALTER TABLE PasswordResetToken DROP CONSTRAINT UQ_PwdResetToken;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_PwdResetToken_Usuario')
+    CREATE INDEX IX_PwdResetToken_Usuario ON PasswordResetToken(id_usuario);
 GO
 
 -- Índices para mejorar el rendimiento en columnas FK

@@ -48,13 +48,16 @@ namespace gestor_financiero.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Create([Bind(Include = "Nombre,Tipo")] Categoria categoria)
         {
-            if (!TiposValidos.Contains(categoria.Tipo))
-                ModelState.AddModelError("Tipo", "Tipo de categoría no válido.");
+            if (string.IsNullOrWhiteSpace(categoria.Tipo))
+                ModelState.AddModelError("Tipo", "Seleccioná un tipo de categoría.");
+            else if (!TiposValidos.Contains(categoria.Tipo))
+                ModelState.AddModelError("Tipo", "Tipo de categoría no válido: " + categoria.Tipo);
 
             if (ModelState.IsValid)
             {
                 db.Categorias.Add(categoria);
                 await db.SaveChangesAsync();
+                TempData["Success"] = "Categoría creada.";
                 return RedirectToAction("Index");
             }
             ViewBag.Tipo = new SelectList(TiposValidos, categoria.Tipo);
@@ -75,13 +78,16 @@ namespace gestor_financiero.Controllers
         [ValidateAntiForgeryToken]
         public async Task<ActionResult> Edit([Bind(Include = "IdCategoria,Nombre,Tipo")] Categoria categoria)
         {
-            if (!TiposValidos.Contains(categoria.Tipo))
-                ModelState.AddModelError("Tipo", "Tipo de categoría no válido.");
+            if (string.IsNullOrWhiteSpace(categoria.Tipo))
+                ModelState.AddModelError("Tipo", "Seleccioná un tipo de categoría.");
+            else if (!TiposValidos.Contains(categoria.Tipo))
+                ModelState.AddModelError("Tipo", "Tipo de categoría no válido: " + categoria.Tipo);
 
             if (ModelState.IsValid)
             {
                 db.Entry(categoria).State = EntityState.Modified;
                 await db.SaveChangesAsync();
+                TempData["Success"] = "Categoría actualizada.";
                 return RedirectToAction("Index");
             }
             ViewBag.Tipo = new SelectList(TiposValidos, categoria.Tipo);
@@ -104,6 +110,7 @@ namespace gestor_financiero.Controllers
             var categoria = await db.Categorias.FindAsync(id);
             db.Categorias.Remove(categoria);
             await db.SaveChangesAsync();
+            TempData["Success"] = "Categoría eliminada.";
             return RedirectToAction("Index");
         }
 

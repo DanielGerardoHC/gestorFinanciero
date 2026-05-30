@@ -1,7 +1,7 @@
 @model gestor_financiero.Models.Transaccion
 @{ ViewBag.Title = "Editar transacción"; }
 
-<div class="max-w-2xl bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+<div class="max-w-2xl mx-auto bg-white rounded-xl shadow-sm border border-slate-100 p-6">
     @using (Html.BeginForm("Edit", "Transaccion", FormMethod.Post, new { @class = "space-y-4" }))
     {
         @Html.AntiForgeryToken()
