@@ -60,11 +60,14 @@ jobs:
           $config = $config.Replace('__DB_NAME__',      '${{ secrets.DB_NAME }}')
           $config = $config.Replace('__DB_USER__',      '${{ secrets.DB_USER }}')
           $config = $config.Replace('__DB_PASSWORD__',  '${{ secrets.DB_PASSWORD }}')
-          # SMTP (Gmail) y URL base para emails
+          # SMTP (Resend) y URL base para emails
+          $config = $config.Replace('__SMTP_HOST__',     '${{ secrets.SMTP_HOST }}')
+          $config = $config.Replace('__SMTP_PORT__',     '${{ secrets.SMTP_PORT }}')
           $config = $config.Replace('__SMTP_USER__',     '${{ secrets.SMTP_USER }}')
           $config = $config.Replace('__SMTP_PASSWORD__', '${{ secrets.SMTP_PASSWORD }}')
-          $config = $config.Replace('__SMTP_FROM__',    '${{ secrets.SMTP_FROM }}')
-          $config = $config.Replace('__APP_BASE_URL__', '${{ secrets.APP_BASE_URL }}')
+          $config = $config.Replace('__SMTP_FROM__',     '${{ secrets.SMTP_FROM }}')
+          $config = $config.Replace('__SMTP_FROM_NAME__', '${{ secrets.SMTP_FROM_NAME }}')
+          $config = $config.Replace('__APP_BASE_URL__',  '${{ secrets.APP_BASE_URL }}')
           Set-Content Web.Release.config $config -NoNewline
 
       # ============================================================
